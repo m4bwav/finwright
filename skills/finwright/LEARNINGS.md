@@ -47,3 +47,11 @@ Entries here are public. They never name the user's institutions, employers, pla
 - Evidence: T-20261013-1
 - Scope: repo
 - Status: active · helpful 1 · harmful 0 · last_confirmed 2026-10-13
+
+### L-006 · 2026-10-13 · `efast2-json-api`: the Form 5500 search page refuses agents, its JSON API does not
+- Trigger: a hunt needs Form 5500 filings for several former employers; efast.dol.gov/5500Search is a script-driven page and a plain fetch gets nothing useful.
+- Hypothesis: the page calls a public search API that answers any GET carrying a browser User-Agent.
+- Rule: query `https://www.efast.dol.gov/services/afs?q.parser=lucene&size=200&q=<field>:<value>` (fields `plansponsor`, `planname`, `ein`), read `pdfpath` from each hit and fetch the filing from `https://efast2-filings-public.s3.amazonaws.com/prd` + that path. For an employer with no plan of its own, search the PEO plans and read their participating-employer lists. Recorded in references/old-401ks.md step 3.
+- Evidence: a three-employer search found two terminated plans (one merged into an acquirer's plan, one fully paid out) and one PEO participation, all from public filings.
+- Scope: skill
+- Status: active · helpful 1 · harmful 0 · last_confirmed 2026-10-13

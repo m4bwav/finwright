@@ -4,6 +4,11 @@ Every change to [SKILL.md](SKILL.md) and its companions, newest first, each with
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261013-5 · 2026-10-13 · Form 5500 search through the EFAST2 JSON API
+- because: L-006
+- files: references/old-401ks.md (The search, step 3)
+- Step 3 now gives the JSON API route an agent can use when the search page refuses a fetch, the filing PDF location, and the PEO participating-employer check.
+
 ### C-20261013-4 · 2026-10-13 · Repository public; CI and security settings on
 - because: user request (make the repository public)
 - files: none in the skill (repository settings only)
