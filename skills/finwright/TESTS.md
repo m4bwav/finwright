@@ -8,6 +8,13 @@ Entry shape: `### T-YYYYMMDD-n · date · harness · env · passed/total`, then 
 
 ## Runs
 
+### T-20261013-1 · 2026-10-13 · unittest + claude -p headless · Windows 11, Python 3.14 and 3.11 (hook and scanner also 3.9) · 3/3 suites, 2/2 live checks
+- Unit: `tests/test_fw.py` 23/23, `tests/test_fw_guard.py` 14/14, `tests/test_leak_scan.py` 6/6, in the repository and in the installed plugin copy. Python 3.11 caught an f-string that only 3.12+ parses (fixed before release).
+- Guard, live from the installed plugin: an echoed Alpaca order POST was denied by the PreToolUse hook (`permission_denials` in the JSON result).
+- Step 0: a fresh session found the overlay at its default path and reported skill version 0.5.0.
+- Leak gate: a staged file and a commit message holding deny-listed names were both refused by the hooks.
+- led to: none
+
 ### T-20261012-2 · 2026-10-12 · claude -p 2.1.281 headless, one run per case · Windows 11 native · 7/7 run, 2 not run
 - trigger-1, trigger-2 and trigger-3: the Skill tool was called with `finwright:finwright` in each trace. trigger-2 replied $2,452.80 (2 x Treasury's $1,226.40 for a 2022-01 issue in 2026-10). trigger-3 replied $35,750 (24,500 + 11,250, age 60 to 63) from `fw.py limits`.
 - decoy-1 went to chartwright and decoy-2 to plain code, with no finwright call in either trace.
