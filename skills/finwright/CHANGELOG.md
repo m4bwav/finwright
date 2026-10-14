@@ -7,7 +7,7 @@ Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (ID
 ### C-20261013-3 · 2026-10-13 · Public release: written for any user, private overlay, leak gate
 - because: user request (publish the plugin for any user)
 - files: SKILL.md (Step 0, Hard rules, Other jobs, Maintenance), every reference, LEARNINGS.md, RESEARCH.md, evals/evals.json, research/ (new, from the first research pass), tools/leak_scan.py (new), .githooks/ (new), .github/workflows/ci.yml (new), README.md, AGENTS.md, SECURITY.md, LICENSE
-- The skill and references now speak of "the user". Step 0 reads an optional private overlay (`$FINWRIGHT_OVERLAY`, else `~/.finwright/OVERLAY.md`) for the user's own decisions and lessons, which win over the defaults and never enter the plugin. Lessons were rewritten with neutral evidence. The research reports moved into `research/` with personal notes removed. A leak scanner runs as a pre-commit hook and in CI against a deny-list kept outside the repository. Licence MIT. Version 0.5.0.
+- The skill and references now speak of "the user". Step 0 reads an optional private overlay (`$FINWRIGHT_OVERLAY`, else `~/.finwright/OVERLAY.md`) for the user's own decisions and lessons, which win over the defaults and never enter the plugin. Lessons were rewritten with neutral evidence. The research reports moved into `research/` with personal notes removed. A leak scanner runs as a pre-commit hook and in CI against a deny-list kept outside the repository. An f-string that only Python 3.12+ parsed was fixed (L-005). Licence MIT. Version 0.5.0.
 
 ### C-20261013-2 · 2026-10-13 · Savings bond account totals count in net worth
 - because: L-003

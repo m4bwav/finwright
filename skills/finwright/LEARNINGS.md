@@ -39,3 +39,11 @@ Entries here are public. They never name the user's institutions, employers, pla
 - Evidence: general pattern
 - Scope: skill
 - Status: active · helpful 1 · harmful 0 · last_confirmed 2026-10-13
+
+### L-005 · 2026-10-13 · `fstring-same-quotes-need-312`: fw.py promised Python 3.10 but only parsed on 3.12+
+- Trigger: an f-string reused its own double quotes inside a replacement field (`f"{sum(r["amount"] ...)}"`); tests passed on 3.14 while 3.10 and 3.11 could not import the file.
+- Hypothesis: PEP 701 (3.12) made that legal, so a newer local Python hides the break.
+- Rule: run the tests on the oldest supported Python before a release (`py -3.11` here; CI runs 3.10); use the other quote kind inside replacement fields.
+- Evidence: T-20261013-1
+- Scope: repo
+- Status: active · helpful 1 · harmful 0 · last_confirmed 2026-10-13
