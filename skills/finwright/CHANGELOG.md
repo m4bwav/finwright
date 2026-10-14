@@ -4,6 +4,11 @@ Every change to [SKILL.md](SKILL.md) and its companions, newest first, each with
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261013-4 · 2026-10-13 · Repository public; CI and security settings on
+- because: user request (make the repository public)
+- files: none in the skill (repository settings only)
+- The repository is now public, so the CI jobs (tests, size budget, leak gate) run on every push. Secret scanning, push protection, private vulnerability reporting, Dependabot alerts, approval for fork pull request workflows and branch protection on master (the leak-gate and budget checks must pass; no force push, no deletion) are on.
+
 ### C-20261013-3 · 2026-10-13 · Public release: written for any user, private overlay, leak gate
 - because: user request (publish the plugin for any user)
 - files: SKILL.md (Step 0, Hard rules, Other jobs, Maintenance), every reference, LEARNINGS.md, RESEARCH.md, evals/evals.json, research/ (new, from the first research pass), tools/leak_scan.py (new), .githooks/ (new), .github/workflows/ci.yml (new), README.md, AGENTS.md, SECURITY.md, LICENSE
