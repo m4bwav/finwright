@@ -1,0 +1,28 @@
+{
+  "description": "finwright guard: no consequential financial action (trade, transfer, payment, write on a money server, browser on a bank site) without the user's typed confirmation",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "mcp__.*|Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/fw_guard.sh\" pretool",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/fw_guard.sh\" prompt",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,70 @@
+# Tests fw.py and the guard on three operating systems, checks the size budget, and runs the leak gate over the
+# tree and the full history. Every job is skipped while the repository is private (hosted runners are billed then).
+name: ci
+on:
+  push:
+    branches: [master]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  tests:
+    if: ${{ !github.event.repository.private }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ["3.10", "3.14"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python }}
+      - name: fw.py tests
+        run: python tests/test_fw.py
+      - name: guard tests
+        run: python tests/test_fw_guard.py
+      - name: leak scanner tests
+        run: python tests/test_leak_scan.py
+  budget:
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: size budget (red fails)
+        shell: bash
+        run: |
+          fw=$(wc -l < skills/finwright/scripts/fw.py); sk=$(wc -l < skills/finwright/SKILL.md)
+          echo "fw.py $fw lines (green < 1200, yellow <= 2000); SKILL.md $sk lines (green < 120)"
+          if [ "$fw" -gt 2000 ]; then echo "::error::fw.py is red: split the connectors into their own module"; exit 1; fi
+          if [ "$fw" -ge 1200 ] || [ "$sk" -ge 120 ]; then echo "::warning::size budget yellow"; fi
+  leak-gate:
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+      - name: deny-list from the LEAK_DENYLIST secret (never printed)
+        shell: bash
+        env:
+          DENYLIST: ${{ secrets.LEAK_DENYLIST }}
+        run: |
+          if [ -n "$DENYLIST" ]; then printf '%s\n' "$DENYLIST" > "$RUNNER_TEMP/denylist.txt"; fi
+      - name: scan the tree and every commit
+        shell: bash
+        run: |
+          opt=""
+          if [ ! -s "$RUNNER_TEMP/denylist.txt" ]; then
+            if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]; then
+              echo "::notice::pull request from a fork: secrets are not available, generic rules only"; opt="--optional"
+            else
+              echo "::error::LEAK_DENYLIST secret is missing"; exit 2
+            fi
+          fi
+          python tools/leak_scan.py tree . --denylist "$RUNNER_TEMP/denylist.txt" --no-data $opt
+          python tools/leak_scan.py history . --denylist "$RUNNER_TEMP/denylist.txt" --no-data $opt

@@ -1,0 +1,1 @@
+seed 1101, Z-Image Turbo bf16 (9 steps, cfg 1.0, res_multistep, simple), 1536x640, rendered 2026-10-13 with the comfyui-gen banner recipe; workflow banner-workflow.api.json, prompt banner-prompt.txt (the prompt replaces {SUBJECT} in node 4).

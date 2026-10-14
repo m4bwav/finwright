@@ -1,0 +1,21 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+*.plugin
+dist/
+.DS_Store
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+.obsidian/cache
+evals/results/
+fixture/
+# Never commit personal financial data. The data folder lives outside this repo
+# (~/finwright-data); these patterns catch accidents.
+finwright-data/
+inbox/
+snapshots/
+*.qfx
+*.ofx
+*.qbo
+statements/
+*.redacted.txt

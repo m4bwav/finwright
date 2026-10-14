@@ -1,0 +1,52 @@
+{
+  "_about": "Time-sensitive numbers fw.py uses. Every entry carries its source and the date it was checked. fw.py check reports a PROBLEM once a next_change date has passed; refresh the skill (evergreen-refresh) then update this file.",
+  "checked": "2026-10-12",
+  "next_change": {
+    "i_bond_rate": {"date": "2026-11-01", "what": "I bond and EE bond rates for Nov 2026 to Apr 2027 issues"},
+    "limits_2027": {"date": "2026-11-15", "what": "IRS 2027 401k, IRA and HSA limits (IRA/401k usually announced Oct to Nov; HSA was due May 2026)"},
+    "sb_value_files": {"date": "2026-12-01", "what": "Treasury savings bond value files cover redemption months through 2026-11; the next semiannual release extends them"}
+  },
+  "limits": {
+    "2026": {
+      "source": "https://www.irs.gov/newsroom/401k-limit-increases-to-24500-for-2026-ira-limit-increases-to-7500 (IR-2025-111, Notice 2025-67); HSA Rev. Proc. 2025-19",
+      "checked": "2026-10-12",
+      "values": {
+        "401k_403b_457_tsp_deferral": "24500",
+        "401k_catch_up_age_50_plus": "8000",
+        "401k_catch_up_age_60_to_63": "11250",
+        "415c_annual_additions": "72000",
+        "ira_contribution": "7500",
+        "ira_catch_up_age_50_plus": "1100",
+        "hsa_self_only": "4400",
+        "hsa_family": "8750",
+        "hsa_catch_up_age_55_plus": "1000",
+        "savings_bond_purchase_per_series": "10000"
+      },
+      "notes": [
+        "Catch-up contributions must be Roth from 2026 if the employee's 2025 FICA wages from that employer were over $150,000 (SECURE 2.0 s.603; final regs IR-2025-91 apply from 2027, good-faith compliance in 2026).",
+        "Savings bond limit is per calendar year per SSN for each series (I and EE separately), electronic only."
+      ]
+    }
+  },
+  "savings_bond_rates": [
+    {"series": "I", "from": "2026-05", "to": "2026-10", "composite": "4.26", "fixed": "0.90", "semiannual_inflation": "1.67", "source": "https://treasurydirect.gov/news/2026/release-05-01-rates/"},
+    {"series": "I", "from": "2025-11", "to": "2026-04", "composite": "4.03", "fixed": "0.90", "semiannual_inflation": "1.56", "source": "https://treasurydirect.gov/savings-bonds/i-bonds/i-bonds-interest-rates/"},
+    {"series": "EE", "from": "2026-05", "to": "2026-10", "composite": "2.40", "fixed": "2.40", "source": "https://treasurydirect.gov/news/2026/release-05-01-rates/"},
+    {"series": "EE", "from": "2025-11", "to": "2026-04", "composite": "2.50", "fixed": "2.50", "source": "https://treasurydirect.gov/savings-bonds/comparing-ee-and-i-bonds"}
+  ],
+  "scf": {
+    "survey": "2025 Survey of Consumer Finances (released 2026-10-09)",
+    "source": "https://www.federalreserve.gov/publications/files/scf26.pdf (Table 2)",
+    "checked": "2026-10-12",
+    "next": "2028 survey, released about late 2029",
+    "median_all": "215900",
+    "median_by_age": [
+      {"label": "under 35", "min": 0, "max": 34, "median": "33000"},
+      {"label": "35-44", "min": 35, "max": 44, "median": "155600"},
+      {"label": "45-54", "min": 45, "max": 54, "median": "253700"},
+      {"label": "55-64", "min": 55, "max": 64, "median": "411900"},
+      {"label": "65-74", "min": 65, "max": 74, "median": "431300"},
+      {"label": "75 and over", "min": 75, "max": 200, "median": "504900"}
+    ]
+  }
+}

@@ -1,0 +1,10 @@
+#!/bin/sh
+# Leak gate: scan the commit message. Enable once per clone: git config core.hooksPath .githooks
+root=$(git rev-parse --show-toplevel) || exit 2
+for p in python3 python py; do
+  if command -v "$p" >/dev/null 2>&1 && "$p" -c "import sys; sys.exit(0 if sys.version_info >= (3, 8) else 1)" </dev/null >/dev/null 2>&1; then
+    exec "$p" "$root/tools/leak_scan.py" message "$1"
+  fi
+done
+echo "commit-msg: no Python 3 found; the leak gate cannot run, so the commit is blocked" >&2
+exit 2

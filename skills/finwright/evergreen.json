@@ -1,0 +1,86 @@
+{
+  "evergreen": "1.0",
+  "name": "finwright",
+  "kind": "skill",
+  "main": "SKILL.md",
+  "files": {
+    "research": "RESEARCH.md",
+    "changelog": "CHANGELOG.md",
+    "learnings": "LEARNINGS.md",
+    "tests": "TESTS.md"
+  },
+  "protocol": "plugin",
+  "source": null,
+  "topic": "Personal net worth tracking for US individuals with an AI agent: bank, 401k, IRA, savings bond (I/EE via Treasury value files), brokerage and liability records; IRS contribution limits; I/EE bond rates; SCF benchmarks; aggregators (SimpleFIN, Plaid, Teller, IBKR Flex, Schwab Trader API); personal-finance MCP servers and AI features (Monarch, Robinhood, Copilot, ChatGPT, Perplexity, Claude Money); security of AI with banking data",
+  "tier": "moderate",
+  "interval_days": 30,
+  "last_checked": "2026-10-12",
+  "next_due": "2026-11-11",
+  "verify_at_use": false,
+  "volatile_claims": [
+    "2026 IRS limits in data/rates.json (401k 24,500; IRA 7,500; HSA 4,400/8,750); 2027 limits due about Nov 2026",
+    "I bond 4.26% (May-Oct 2026 issues), EE 2.40%; next rates 2026-11-01",
+    "Fiscal Data sb_value covers redemption months through 2026-11 (checked 2026-10-12)",
+    "Aggregator prices: SimpleFIN Bridge $15/yr, Plaid Trial free 10 Items, Teller free 100 connections (2026-10-12, partly secondary)",
+    "MCP landscape star counts and vendor MCP status in references/landscape.md (2026-10-12)",
+    "CFPB 1033 stayed, rewrite at OIRA since 2026-08-06",
+    "Claude Code hook fields and permission rule order (built and tested on 2.1.281; onFailure needs 2.1.295+); MCP spec 2026-07-28 annotations untrusted"
+  ],
+  "contradiction": null,
+  "events": [
+    {
+      "date": "2026-11-01",
+      "settle_days": 3,
+      "note": "New I and EE bond rates for Nov 2026 to Apr 2027 issues; add to data/rates.json savings_bond_rates"
+    },
+    {
+      "date": "2026-11-15",
+      "settle_days": 14,
+      "note": "IRS 2027 401k/IRA limits (and HSA 2027 from Rev. Proc.); add limits.2027 to data/rates.json"
+    },
+    {
+      "date": "2026-12-01",
+      "settle_days": 14,
+      "note": "Treasury savings bond value files extended past 2026-11; confirm latest redemp_period"
+    }
+  ],
+  "streak": {
+    "quiet": 0,
+    "pinned_min": 0,
+    "pinned_max": 0,
+    "vau_quiet": 0
+  },
+  "history": [
+    {
+      "date": "2026-10-12",
+      "m": null,
+      "interval_after": 30,
+      "note": "created; research by four parallel subagent passes (about 260 searches and fetches), 5 R- entries; sb_value API verified live"
+    },
+    {
+      "date": "2026-10-12",
+      "m": 0.6,
+      "interval_after": 30,
+      "note": "safeguards research (R-20261012-6) and guard hook added on user request (C-20261012-2)"
+    }
+  ],
+  "counts": {
+    "learnings": 0,
+    "changes": 0,
+    "research": 0,
+    "tests": 0
+  },
+  "consolidate_every": 25,
+  "tests": {
+    "last_run": "2026-10-12T22:15",
+    "harness": "claude -p 2.1.281 headless + unittest",
+    "env": "Windows 11 native",
+    "cases": 7,
+    "passed": 7,
+    "failed": 0,
+    "failing": [],
+    "last_failure": null,
+    "research_after_days": null
+  },
+  "version": "0.5.0"
+}
