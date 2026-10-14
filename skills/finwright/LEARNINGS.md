@@ -63,3 +63,11 @@ Entries here are public. They never name the user's institutions, employers, pla
 - Evidence: one lookup, two refused routes and one that worked, 2026-10-13
 - Scope: skill
 - Status: active · helpful 1 · harmful 0 · last_confirmed 2026-10-13
+
+### L-008 · 2026-10-14 · `pr-merge-commit-uses-web-email`: GitHub's pull request merge commit carried the maintainer's personal email
+- Trigger: the first pull request on the repository failed the CI leak gate. The branch's commit used the no-reply identity and passed locally; the history scan flagged only the merge commit GitHub builds to test a pull request (refs/pull/N/merge), whose author was the account's web-commit email.
+- Hypothesis: GitHub authors web-made commits (test merges, merge and squash buttons) with the account's primary email unless "Keep my email addresses private" is on, so a repository can be clean while every GitHub-made commit is not.
+- Rule: before a public repository takes pull requests, turn on "Keep my email addresses private" (github.com/settings/emails). Until then, land the maintainer's own branches by fast-forwarding master, not with a merge or squash button, and treat a leak-gate failure on a merge commit as real.
+- Evidence: CI run on pull request 1, 2026-10-14: tree clean, history 1 finding on the GitHub merge commit only
+- Scope: skill
+- Status: active · helpful 1 · harmful 0 · last_confirmed 2026-10-14
