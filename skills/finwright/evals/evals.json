@@ -30,6 +30,15 @@
       "runs": 3
     },
     {
+      "id": "trigger-4",
+      "kind": "trigger",
+      "prompt": "I downloaded a .qfx file from my credit union, can you put it in my net worth records",
+      "expectations": [
+        "the finwright skill is invoked"
+      ],
+      "runs": 3
+    },
+    {
       "id": "decoy-1",
       "kind": "trigger",
       "decoy": true,

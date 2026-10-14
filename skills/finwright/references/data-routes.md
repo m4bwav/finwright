@@ -35,6 +35,16 @@ fw.py reads this format directly. Checked 2026-10-12 to 2026-10-13. Sources: the
 - **Never give a User ID or password to any tool.** The Online Banking Service Agreement makes the customer responsible for anything done with them.
 - **CFPB 1033 (open banking rule):** enforcement blocked by a court since 2025-10-29; a rewrite went to OMB on 2026-08-06. No consumer API right exists today.
 
+## QFX and OFX downloads
+
+Quicken files ("Web Connect", .qfx or .ofx) are still offered by many banks, card issuers and brokers even where Direct Connect has ended; some institutions have ended them entirely (see the Bank of America section). `fw.py import ofx <file>` reads both dialects: OFX 1.x (SGML, leaf tags left open) and 2.x (XML).
+
+- **Matching:** each statement in the file is matched to an account by the last 4 characters of its account number, so give every account its `--last4`. The full number is read only to take those 4 characters; it is never stored or printed. `--account <id>` works for a file holding one statement.
+- **Bank and card statements:** the ledger balance and its date are recorded (`source` ofx). OFX signs card debt negative; a positive card balance is stored as a credit and flagged, because some issuers sign it the other way. Check the first import against the statement and record the issuer's convention in the overlay.
+- **Brokerage statements:** each position's market value and units from the position list, tickers from the security list (the CUSIP when there is no ticker), plus available cash as a `CASH` holding; the balance is positions plus cash. Debt positions default to `bond`, everything else to `other` until `--classes` says otherwise. A re-import for the same date replaces the holdings, and expense ratios entered earlier carry over.
+- **Duplicates:** a balance already recorded for the same date and account from an OFX file is skipped, so importing overlapping downloads is safe. `--dry-run` shows what would be recorded.
+- Transactions are counted, not stored: net worth needs balances.
+
 ## Column maps for `fw.py import holdings`
 
 Broker exports put summary lines above the header. fw.py starts at the first line containing `--value-col`. Trailing `*` on symbols (Fidelity's `SPAXX**`) is stripped. Rows with no symbol or no number (pending activity, totals) are skipped and counted.

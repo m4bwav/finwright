@@ -1,8 +1,8 @@
 ---
 name: finwright
-description: "Keep the user's own money records and run their net worth check locally: bank and credit card balances, 401k and IRA holdings, savings bonds (I and EE, valued from Treasury's own value files), brokerage accounts, home and loans, with every number computed by the bundled fw.py script in decimal arithmetic. Also allocation drift, 401k fund fees, money-weighted returns, contribution limits, SCF net worth benchmarks, redacting statements, and which apps, MCP servers and data routes (SimpleFIN, Plaid, IBKR Flex, CSV exports) fit. Use whenever the user asks for a net worth check, 'what am I worth', 'update my balances', 'track my 401k', 'what are my I bonds worth', 'import this statement', 'am I on target', 'how much can I put in my 401k this year', 'what are my fund fees', 'how did my IRA do', or wants to find old 401(k)s from previous jobs, imports a Monarch export or a bank's activity CSV, asks how to get a bank's or broker's data in, or asks which finance app or AI tool to use. Also for 'refresh finwright' and 'is finwright stale'. Read-only: never logs in, never moves money, not financial advice. Windows, macOS, Linux."
+description: "Keep the user's own money records and run their net worth check locally: bank and credit card balances, 401k and IRA holdings, savings bonds (I and EE, valued from Treasury's own value files), brokerage accounts, home and loans, with every number computed by the bundled fw.py script in decimal arithmetic. Also allocation drift, 401k fund fees and what they cost over the years, money-weighted and time-weighted returns, contribution limits, SCF net worth benchmarks, redacting statements, and which apps, MCP servers and data routes (SimpleFIN, Plaid, IBKR Flex, CSV exports) fit. Use whenever the user asks for a net worth check, 'what am I worth', 'update my balances', 'track my 401k', 'what are my I bonds worth', 'import this statement', 'am I on target', 'how much can I put in my 401k this year', 'what are my fund fees', 'how did my IRA do', or wants to find old 401(k)s from previous jobs, imports a Monarch export, a QFX or OFX download or a bank's activity CSV, wants a net worth summary without dollar amounts, asks how to get a bank's or broker's data in, or asks which finance app or AI tool to use. Also for 'refresh finwright' and 'is finwright stale'. Read-only: never logs in, never moves money, not financial advice. Windows, macOS, Linux."
 metadata:
-  version: 0.5.0
+  version: 0.6.0
 ---
 
 # finwright
@@ -32,12 +32,13 @@ The full rule set with sources: [references/rules.md](references/rules.md).
 
 1. `FW account list`. For each account with no balance or a stale one (`FW check` lists them), get the new figure:
    - **A file the user downloaded** (positions CSV, 401k export): `FW import holdings <file> --account <id> --as-of <date> --classes SYM=class,... --set-balance`. Map the columns with `--symbol-col` and `--value-col` when the headers differ (examples in [references/data-routes.md](references/data-routes.md)).
+   - **A QFX or OFX download** (bank, card or brokerage, where the institution still offers Quicken files): `FW import ofx <file> --classes SYM=class,...`. Statements match accounts by last 4; untracked ones are listed. Brokerage files bring positions and cash.
    - **A figure the user reads off a statement or site**: `FW balance set <id> <value> --as-of <statement date> --source statement`.
    - **Savings bonds**: `FW bond add` once per bond (series, issue month, amount), then `FW bond refresh` each month.
    - **Home or car**: `FW balance set house <value> --source zillow` (or kbb). Revalue a few times a year.
 2. `FW networth --save`. This writes `<data>/snapshots/<date>.json`. Confirm that the file exists before saying the check is done.
 3. Report the fw.py lines as printed: total, liquid, investable and after-tax estimate, plus unvested amounts shown separately. Add every warning (stale balances, bonds without values) and `FW history` for the change since the last snapshot.
-4. If asked, add `FW allocation` (drift against the targets set with `FW config set target us_stock=0.6`; flags 5/25 band crossings), `FW fees` (weighted expense ratio), `FW returns <account>` (XIRR; needs contributions recorded with `FW flow add`) and `FW benchmark` (SCF median for the user's age band, with the household caveat).
+4. If asked, add `FW allocation` (drift against the targets set with `FW config set target us_stock=0.6`; flags 5/25 band crossings), `FW fees` (weighted expense ratio; `--project --admin-fee <dollars a year>` adds the cost over 10, 20 and 30 years at an assumed growth rate, which the reply names as an assumption), `FW returns <account>` (XIRR and the time-weighted return side by side; needs contributions recorded with `FW flow add`) and `FW benchmark` (SCF median for the user's age band, with the household caveat).
 
 Monthly is the usual cadence. The same day each month keeps the history comparable. When a valuation method changes (`FW config set ...`), fw.py logs it and `history` marks the break.
 
@@ -49,6 +50,7 @@ Monthly is the usual cadence. The same day each month keeps the history comparab
 - **Old 401(k)s from previous jobs:** one `FW hunt add` per former employer, the free sweeps (DOL Lost and Found, SSA-L99, IRS transcripts), Form 5500 lookups and the user's call script: [references/old-401ks.md](references/old-401ks.md). `FW hunt list` shows what is open and the next step.
 - **Monarch:** its balances CSV through `FW monarch map` and `FW import monarch`; the official connector (paused) read-only at most; never its password, TOTP secret or session: [references/monarch.md](references/monarch.md).
 - **Bank activity CSVs:** a Bank of America checking, savings or money market activity CSV goes in with `FW import bofa <file> <account> --monthly`: it checks the summary and every running balance, records month-end balances, and lists payees and linked accounts (cards, brokerage) that net worth does not track yet. Other banks: read the balance off the statement, or the routes in [references/data-routes.md](references/data-routes.md).
+- **A summary to share or paste somewhere less trusted:** `FW networth --percent-only` gives shares of assets with no dollar amounts and no account names.
 - **Redacting a file before reading it:** `FW redact <file> --out <file>.redacted.txt` masks account numbers and SSNs.
 
 ## References

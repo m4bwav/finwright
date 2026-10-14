@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import csv
 import datetime as dt
+import html
 import io
 import json
 import os
@@ -23,7 +24,7 @@ import urllib.request
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation, getcontext
 from pathlib import Path
 
-VERSION = "0.5.0"
+VERSION = "0.6.0"
 getcontext().prec = 28
 CENT = Decimal("0.01")
 DISCLAIMER = "Personal record keeping, not financial, tax or legal advice."
@@ -169,6 +170,48 @@ def log_method(d: Path, text: str) -> None:
         h.write(f"{today().isoformat()} {text}\n")
 
 
+def add_balances(d: Path, rows: list[dict], dry_run: bool = False, replace: bool = False) -> tuple[int, int]:
+    """Record balance rows, skipping any (date, account, source) already recorded; with replace, a new
+    value for the same key overwrites the old row (a re-downloaded file). Returns (written, unchanged)."""
+    old = read_rows(d, "balances.csv")
+    index = {(r["date"], r["account"], r["source"]): i for i, r in enumerate(old)}
+    seen: set = set()
+    n = dup = 0
+    for row in rows:
+        row = {"method": "", "note": "", **row}
+        key = (row["date"], row["account"], row["source"])
+        if key in seen:
+            raise FwError(f"two balances for {row['account']} on {row['date']} in one import; nothing recorded")
+        seen.add(key)
+        i = index.get(key)
+        if i is not None and (not replace or old[i]["value"] == row["value"]):
+            dup += 1
+            continue
+        if i is None:
+            index[key] = len(old)
+            old.append(row)
+        else:
+            old[i] = row
+        n += 1
+    if n and not dry_run:
+        write_rows(d, "balances.csv", old)
+    return n, dup
+
+
+def file_label(path: str) -> str:
+    """A download's file name for notes and logs, with long digit runs (account numbers) cut to the last 4."""
+    return re.sub(r"\d{5,}", lambda m: "****" + m.group()[-4:], Path(path).name)
+
+
+def replace_holdings(d: Path, account: str, date: str, new: list[dict], symbol: str | None = None) -> int:
+    """Swap in one account's holdings for a date (or one symbol's), so a re-import never doubles them."""
+    rows = read_rows(d, "holdings.csv")
+    keep = [r for r in rows if not (r["account"] == account and r["date"] == date
+                                    and (symbol is None or r["symbol"] == symbol))]
+    write_rows(d, "holdings.csv", keep + new)
+    return len(rows) - len(keep)
+
+
 # ---------- init / check ----------
 
 def cmd_init(args) -> None:
@@ -302,6 +345,17 @@ def cmd_monarch_map(args) -> None:
     print(f"mapped {args.name!r} -> {args.account}")
 
 
+def signed_balance(acct: dict, bal: Decimal, day: dt.date, where: str) -> Decimal:
+    """A balance from a source that shows debts as negative, as fw.py stores it (amount owed)."""
+    liability = acct["type"] in LIABILITY_TYPES
+    if liability and bal > 0:
+        print(f"warning: {acct['id']} is a liability with a positive {where} balance {fmt(bal)} on {day}; "
+              "stored as a credit (negative amount owed). Check the statement.")
+    if not liability and bal < 0:
+        print(f"warning: {acct['id']} is an asset with a negative {where} balance {fmt(bal)} on {day}")
+    return -bal if liability else bal
+
+
 def cmd_import_monarch(args) -> None:
     """Monarch's 'Download account balances' CSV: Date,Balance,Account; liabilities negative."""
     d = data_dir(args)
@@ -336,26 +390,12 @@ def cmd_import_monarch(args) -> None:
     if unmapped and not args.skip_unmapped:
         raise FwError("Monarch accounts with no mapping: " + ", ".join(sorted(map(repr, unmapped)))
                       + ". Map each with `fw.py monarch map`, or pass --skip-unmapped")
-    have = {(r["date"], r["account"], r["source"]) for r in read_rows(d, "balances.csv")}
-    n = dup = 0
+    new = []
     for acct, day, bal in sorted(picked, key=lambda x: (x[1], x[0])):
-        liability = known[acct]["type"] in LIABILITY_TYPES
-        v = -bal if liability else bal  # Monarch shows debts as negative; fw.py stores amount owed
-        if liability and bal > 0:
-            print(f"warning: {acct} is a liability with a positive Monarch balance {fmt(bal)} on {day}; "
-                  "stored as a credit (negative amount owed). Check the statement.")
-        if not liability and bal < 0:
-            print(f"warning: {acct} is an asset with a negative Monarch balance {fmt(bal)} on {day}")
-        key = (day.isoformat(), acct, "monarch-csv")
-        if key in have:
-            dup += 1
-            continue
-        if not args.dry_run:
-            append_row(d, "balances.csv", {"date": day.isoformat(), "account": acct, "value": str(v),
-                                           "source": "monarch-csv", "method": "monarch",
-                                           "note": ""})
-            have.add(key)
-        n += 1
+        v = signed_balance(known[acct], bal, day, "Monarch")  # Monarch shows debts as negative
+        new.append({"date": day.isoformat(), "account": acct, "value": str(v),
+                    "source": "monarch-csv", "method": "monarch"})
+    n, dup = add_balances(d, new, args.dry_run)
     verb = "would import" if args.dry_run else "imported"
     print(f"{verb} {n} balance row(s) from {args.file}; {dup} duplicate(s) skipped")
     if unmapped:
@@ -448,20 +488,10 @@ def cmd_import_bofa(args) -> None:
     month_end.pop((end_day.year, end_day.month), None)  # the ending balance stands for its month
     picked = dict(month_end.values())
     picked[end_day] = end_bal
-    have = {(r["date"], r["account"], r["source"]) for r in read_rows(d, "balances.csv")}
-    n = dup = 0
-    for day, bal in sorted(picked.items()):
-        key = (day.isoformat(), args.account, "bofa-csv")
-        if key in have:
-            dup += 1
-            continue
-        if not args.dry_run:
-            append_row(d, "balances.csv", {"date": day.isoformat(), "account": args.account,
-                                           "value": str(bal), "source": "bofa-csv",
-                                           "method": "running balance",
-                                           "note": "" if day != end_day else "ending balance"})
-            have.add(key)
-        n += 1
+    n, dup = add_balances(d, [{"date": day.isoformat(), "account": args.account, "value": str(bal),
+                               "source": "bofa-csv", "method": "running balance",
+                               "note": "" if day != end_day else "ending balance"}
+                              for day, bal in sorted(picked.items())], args.dry_run)
     verb = "would import" if args.dry_run else "imported"
     print(f"{args.account}: {sum(r['amount'] is not None for r in rows)} transaction(s), {summary.get('begin', (None,))[0]} to {end_day}; "
           f"ending balance {fmt(end_bal)}; arithmetic {'OK' if not problems else 'HAS PROBLEMS'}")
@@ -486,7 +516,7 @@ def cmd_import_bofa(args) -> None:
             mark = f"tracked as {known4[last4]}" if last4 in known4 else "NOT TRACKED"
             print(f"  {kind} ...{last4}: {len(amts)} transfer(s), {fmt(sum(amts))}  [{mark}]")
     if not args.dry_run:
-        log_method(d, f"import bofa {Path(args.file).name} -> {args.account}: {n} row(s), "
+        log_method(d, f"import bofa {file_label(args.file)} -> {args.account}: {n} row(s), "
                       f"ending {end_day} {'OK' if not problems else 'arithmetic problems'}")
 
 
@@ -502,12 +532,8 @@ def cmd_import_holdings(args) -> None:
     if start is None:
         raise FwError(f"no header containing {args.value_col!r} in {args.file}")
     reader = csv.DictReader(io.StringIO("\n".join(lines[start:])))
-    classes = {}
-    if args.classes:
-        for pair in args.classes.split(","):
-            sym, _, cls = pair.partition("=")
-            classes[sym.strip().upper()] = cls.strip()
-    n, total, skipped = 0, Decimal(0), 0
+    classes = parse_classes(args.classes)
+    new, total, skipped = [], Decimal(0), 0
     for r in reader:
         sym = (r.get(args.symbol_col) or "").strip().upper().rstrip("*")
         raw = (r.get(args.value_col) or "").strip()
@@ -523,17 +549,223 @@ def cmd_import_holdings(args) -> None:
         if cls not in ASSET_CLASSES:
             raise FwError(f"asset class {cls!r} for {sym}: use one of {sorted(ASSET_CLASSES)}")
         units = (r.get(args.units_col) or "").strip().replace(",", "") if args.units_col else ""
-        append_row(d, "holdings.csv", {"date": date, "account": args.account, "symbol": sym,
-                                       "asset_class": cls, "value": str(v), "units": units,
-                                       "expense_ratio": ""})
-        n += 1
+        new.append({"date": date, "account": args.account, "symbol": sym, "asset_class": cls,
+                    "value": str(v), "units": units, "expense_ratio": ""})
         total += v
-    print(f"imported {n} holding(s) for {args.account} as of {date}, total {fmt(total)}; skipped {skipped} row(s)")
+    if not new:
+        raise FwError(f"no holdings found in {args.file} (symbol column {args.symbol_col!r}, value column "
+                      f"{args.value_col!r}); nothing replaced")
+    old = replace_holdings(d, args.account, date, keep_expense_ratios(d, args.account, new))
+    print(f"imported {len(new)} holding(s) for {args.account} as of {date}, total {fmt(total)}; "
+          f"skipped {skipped} row(s)" + (f"; replaced {old} earlier row(s) for that date" if old else ""))
     if args.set_balance:
-        append_row(d, "balances.csv", {"date": date, "account": args.account, "value": str(total),
-                                       "source": f"holdings:{Path(args.file).name}", "method": "sum of positions",
-                                       "note": ""})
-        print(f"recorded balance {fmt(total)} for {args.account}")
+        n, _ = add_balances(d, [{"date": date, "account": args.account, "value": str(total),
+                                 "source": f"holdings:{file_label(args.file)}", "method": "sum of positions"}],
+                            replace=True)
+        print(f"{'recorded' if n else 'already recorded:'} balance {fmt(total)} for {args.account}")
+
+
+def parse_classes(text: str | None) -> dict[str, str]:
+    """--classes SYM=class,SYM=class as {SYM: class}."""
+    out = {}
+    for pair in (text or "").split(","):
+        if pair.strip():
+            sym, eq, cls = pair.partition("=")
+            if not eq:
+                raise FwError(f"--classes takes SYM=class pairs; got {pair!r}")
+            out[sym.strip().upper()] = cls.strip().lower()
+    return out
+
+
+def keep_expense_ratios(d: Path, account: str, new: list[dict]) -> list[dict]:
+    """Carry each symbol's last known expense ratio onto newly imported rows (exports rarely include it)."""
+    er = {r["symbol"]: r["expense_ratio"] for r in read_rows(d, "holdings.csv")
+          if r["account"] == account and r["expense_ratio"]}
+    return [{**r, "expense_ratio": r["expense_ratio"] or er.get(r["symbol"], "")} for r in new]
+
+
+# ---------- OFX / QFX ----------
+
+OFX_TAG = re.compile(r"<(/?)(?:[A-Za-z0-9]+:)?([A-Za-z0-9.]+)([^<>]*)>([^<]*)")
+OFX_STATEMENTS = (("bank", "STMTRS", "BANKACCTFROM"), ("card", "CCSTMTRS", "CCACCTFROM"),
+                  ("invest", "INVSTMTRS", "INVACCTFROM"))
+
+
+def ofx_tree(text: str) -> dict:
+    """OFX 1.x (SGML, leaf tags left open) or 2.x (XML) as nested dicts; a repeated tag becomes a list."""
+    m = re.search(r"<(?:[A-Za-z0-9]+:)?OFX[\s>]", text, re.I)
+    if not m:
+        raise FwError("not an OFX or QFX file (no <OFX> tag)")
+    body = text[m.start():]
+    # an open tag with no value is an aggregate only if that name is closed somewhere; else an empty leaf
+    closed = {t.upper() for t in re.findall(r"</(?:[A-Za-z0-9]+:)?([A-Za-z0-9.]+)", body)}
+    root: dict = {}
+    stack: list[tuple[str, dict]] = [("", root)]
+    last_leaf = None
+
+    def put(node: dict, tag: str, v) -> None:
+        if tag in node:
+            node[tag] = (node[tag] if isinstance(node[tag], list) else [node[tag]]) + [v]
+        else:
+            node[tag] = v
+
+    for close, tag, attrs, val in OFX_TAG.findall(body):
+        tag, val = tag.upper(), html.unescape(val.strip())
+        if close:
+            if tag == last_leaf:  # a leaf's own XML close tag
+                last_leaf = None
+            elif any(n == tag for n, _ in stack[1:]):
+                while True:
+                    name, node = stack.pop()
+                    if name == tag:
+                        break
+                if node == {}:  # <TAG></TAG>: an empty leaf, not an aggregate
+                    parent = stack[-1][1]
+                    if isinstance(parent[tag], list):
+                        parent[tag][-1] = ""
+                    else:
+                        parent[tag] = ""
+            continue
+        if val or attrs.rstrip().endswith("/") or tag not in closed:
+            put(stack[-1][1], tag, val)
+            last_leaf = tag
+        else:
+            child: dict = {}
+            put(stack[-1][1], tag, child)
+            stack.append((tag, child))
+            last_leaf = None
+    return root
+
+
+def ofx_amount(v, what: str) -> Decimal:
+    """An OFX amount; the spec allows a comma as the decimal mark."""
+    if not isinstance(v, str) or not v.strip():
+        raise FwError(f"OFX {what} has no amount")
+    v = v.strip()
+    if re.fullmatch(r"[+-]?\d+,\d{1,2}", v):
+        v = v.replace(",", ".")
+    return money(v)
+
+
+def ofx_find(node, tag: str):
+    """Every value stored under `tag` anywhere below `node`."""
+    if isinstance(node, list):
+        for n in node:
+            yield from ofx_find(n, tag)
+    elif isinstance(node, dict):
+        for k, v in node.items():
+            if k == tag:
+                yield from (v if isinstance(v, list) else [v])
+            yield from ofx_find(v, tag)
+
+
+def ofx_one(node, tag: str, default=""):
+    return next(ofx_find(node, tag), default)
+
+
+def ofx_date(s: str) -> dt.date:
+    if not re.match(r"\d{8}", s or ""):
+        raise FwError(f"not an OFX date: {s!r}")
+    return dt.date(int(s[:4]), int(s[4:6]), int(s[6:8]))
+
+
+def ofx_statements(tree: dict) -> list[dict]:
+    """Each statement's kind, account last 4, balance date and value, and (brokerage) positions.
+    The full account number is read only to take its last 4; it is never stored or printed."""
+    names = {}
+    for sec in ofx_find(tree, "SECINFO"):
+        if isinstance(sec, dict):
+            uid = ofx_one(sec.get("SECID", {}), "UNIQUEID")
+            names[uid] = str(sec.get("TICKER") or uid or sec.get("SECNAME", ""))
+    out = []
+    for kind, rs, acct_tag in OFX_STATEMENTS:
+        for st in ofx_find(tree, rs):
+            acctid = ofx_one(st.get(acct_tag, {}), "ACCTID")
+            s = {"kind": kind, "last4": re.sub(r"[^A-Za-z0-9]", "", acctid)[-4:].upper(),
+                 "txns": sum(1 for _ in ofx_find(st, "STMTTRN")), "positions": []}
+            if kind == "invest":
+                s["date"] = ofx_date(st.get("DTASOF") or ofx_one(st, "DTEND"))
+                for plist in ofx_find(st, "INVPOSLIST"):
+                    for wrap, items in (plist.items() if isinstance(plist, dict) else ()):
+                        for p in items if isinstance(items, list) else [items]:
+                            pos = p.get("INVPOS", {})
+                            uid = ofx_one(pos.get("SECID", {}), "UNIQUEID")
+                            sym = names.get(uid, uid).upper()
+                            s["positions"].append({"symbol": sym, "wrap": wrap, "units": pos.get("UNITS", ""),
+                                                   "value": ofx_amount(pos.get("MKTVAL"), f"position {sym}")})
+                s["cash"] = ofx_amount(ofx_one(st.get("INVBAL", {}), "AVAILCASH", "0") or "0", "AVAILCASH")
+                s["value"] = sum((p["value"] for p in s["positions"]), Decimal(0)) + s["cash"]
+            else:
+                bal = st.get("LEDGERBAL") or st.get("AVAILBAL") or {}
+                if not isinstance(bal, dict) or "BALAMT" not in bal:
+                    raise FwError(f"{kind} statement ...{s['last4']} has no LEDGERBAL balance")
+                s["date"], s["value"] = ofx_date(bal.get("DTASOF", "")), ofx_amount(bal["BALAMT"], "BALAMT")
+            out.append(s)
+    if not out:
+        raise FwError("no bank, card or brokerage statement in this OFX file")
+    return out
+
+
+def cmd_import_ofx(args) -> None:
+    """A QFX or OFX download (Quicken Web Connect): balances for bank and card statements, and
+    positions plus cash for brokerage ones. Accounts are matched by last 4, or --account for one."""
+    d = data_dir(args)
+    known = accounts(d)
+    by4: dict[str, list[dict]] = {}
+    for a in known.values():
+        if a.get("last4"):
+            by4.setdefault(a["last4"].upper(), []).append(a)
+    raw = Path(args.file).read_bytes()
+    cp1252 = re.search(rb"CHARSET:\s*1252|encoding=.windows-1252", raw[:600], re.I)
+    stmts = ofx_statements(ofx_tree(raw.decode("cp1252" if cp1252 else "utf-8-sig", errors="replace")))
+    if args.account and len(stmts) > 1:
+        raise FwError(f"{args.file} holds {len(stmts)} statements; drop --account and give each "
+                      "account its last 4 with `fw.py account add ... --last4` so they match")
+    classes = parse_classes(args.classes)
+    name = file_label(args.file)
+    new, missing = [], []
+    for s in stmts:
+        match = by4.get(s["last4"], [])
+        if not args.account and len(match) > 1:
+            raise FwError(f"accounts {', '.join(a['id'] for a in match)} all end in {s['last4']}; import "
+                          "a file with one statement with --account, or tell them apart with --last4")
+        a = need_account(d, args.account) if args.account else (match[0] if match else None)
+        if a is None:
+            missing.append(f"{s['kind']} ...{s['last4']}")
+            continue
+        if args.account and a.get("last4") and a["last4"].upper() != s["last4"]:
+            print(f"warning: {name} is for ...{s['last4']}, but {a['id']} is recorded as ...{a['last4']}")
+        day = s["date"].isoformat()
+        if s["kind"] == "invest":
+            rows = [{"date": day, "account": a["id"], "symbol": p["symbol"],
+                     "asset_class": classes.get(p["symbol"], "bond" if p["wrap"] == "POSDEBT" else "other"),
+                     "value": str(p["value"]), "units": p["units"], "expense_ratio": ""} for p in s["positions"]]
+            if s["cash"]:
+                rows.append({"date": day, "account": a["id"], "symbol": "CASH", "asset_class": "cash",
+                             "value": str(s["cash"]), "units": "", "expense_ratio": ""})
+            bad = sorted({r["asset_class"] for r in rows} - ASSET_CLASSES)
+            if bad:
+                raise FwError(f"asset class {bad[0]!r} in --classes: use one of {sorted(ASSET_CLASSES)}")
+            if not args.dry_run:
+                replace_holdings(d, a["id"], day, keep_expense_ratios(d, a["id"], rows))
+            unclassed = [r["symbol"] for r in rows if r["asset_class"] == "other"]
+            detail = f"{len(s['positions'])} position(s) + cash {fmt(s['cash'])}"
+            if unclassed:
+                detail += f"; class 'other' for {', '.join(unclassed)} (set with --classes SYM=class)"
+            v = s["value"]
+        else:
+            v = signed_balance(a, s["value"], s["date"], "OFX")  # OFX signs card debt negative
+            detail = f"{s['txns']} transaction(s)"
+        new.append({"date": day, "account": a["id"], "value": str(v), "source": "ofx",
+                    "method": "positions + cash" if s["kind"] == "invest" else "ledger balance", "note": name})
+        print(f"{a['id']}: {s['kind']} ...{s['last4']} {fmt(v)} as of {day}; {detail}")
+    n, dup = add_balances(d, new, args.dry_run, replace=True)
+    print(f"{'would import' if args.dry_run else 'imported'} {n} balance row(s) from {name}; "
+          f"{dup} already recorded")
+    if missing:
+        print("not tracked (add each with `fw.py account add ... --last4`, then import again): " + ", ".join(missing))
+    if not args.dry_run and n:
+        log_method(d, f"import ofx {name}: {n} row(s)")
 
 
 def cmd_holding_set(args) -> None:
@@ -543,9 +775,10 @@ def cmd_holding_set(args) -> None:
         raise FwError(f"asset class must be one of {sorted(ASSET_CLASSES)}")
     er = str(money(args.expense_ratio)) if args.expense_ratio else ""
     date = parse_date(args.as_of).isoformat() if args.as_of else today().isoformat()
-    append_row(d, "holdings.csv", {"date": date, "account": args.account, "symbol": args.symbol.upper(),
-                                   "asset_class": args.asset_class, "value": str(money(args.value)),
-                                   "units": args.units or "", "expense_ratio": er})
+    sym = args.symbol.upper()
+    replace_holdings(d, args.account, date, [{"date": date, "account": args.account, "symbol": sym,
+                                              "asset_class": args.asset_class, "value": str(money(args.value)),
+                                              "units": args.units or "", "expense_ratio": er}], sym)
     print(f"{args.account} {args.symbol.upper()} = {fmt(money(args.value))} ({args.asset_class}) as of {date}")
 
 
@@ -766,12 +999,42 @@ def compute_networth(d: Path, as_of: dt.date) -> dict:
     }
 
 
+def percent_view(nw: dict) -> dict:
+    """The net worth report as shares of total assets, with no dollar amounts and no account names."""
+    assets = Decimal(nw["assets"])
+    if assets <= 0:
+        raise FwError("no assets recorded, so there is nothing to show as shares")
+    share = lambda v: str((Decimal(v) / assets).quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP))  # noqa: E731
+    return {"as_of": nw["as_of"],
+            "of_assets": {"net_worth": share(nw["total"]), "liabilities": share(nw["liabilities"]),
+                          "liquid": share(nw["liquid"]), "investable": share(nw["investable"])},
+            "assets_by_type": {t: share(v) for t, v in nw["by_type"].items()
+                               if t in ASSET_TYPES - {"unvested"}},
+            "warnings": len(nw["warnings"]), "version": nw["version"]}
+
+
 def cmd_networth(args) -> None:
     d = data_dir(args)
     as_of = parse_date(args.as_of) if args.as_of else today()
     nw = compute_networth(d, as_of)
     if args.save:
         (d / "snapshots" / f"{nw['as_of']}.json").write_text(json.dumps(nw, indent=2) + "\n", encoding="utf-8")
+    if args.percent_only:
+        shares = percent_view(nw)
+        if args.json:
+            print(json.dumps(shares, indent=2))
+            return
+        print(f"Net worth shares as of {shares['as_of']}  (fw.py {VERSION}; no dollar amounts shown)")
+        for k, label in (("net_worth", "Net worth"), ("liabilities", "Liabilities"), ("liquid", "Liquid net worth"),
+                         ("investable", "Investable assets")):
+            print(f"  {label:<20} {pct(Decimal(shares['of_assets'][k])):>9} of assets")
+        print("  Assets by type:")
+        for t, v in shares["assets_by_type"].items():
+            print(f"    {t:<18} {pct(Decimal(v)):>9}")
+        if shares["warnings"]:
+            print(f"  {shares['warnings']} warning(s) hidden in this view; run `networth` without --percent-only")
+        print(DISCLAIMER)
+        return
     if args.json:
         print(json.dumps(nw, indent=2))
         return
@@ -803,7 +1066,9 @@ def cmd_history(args) -> None:
         return
     method_dates = set()
     if (d / "methods.log").exists():
-        method_dates = {ln.split(" ", 1)[0] for ln in (d / "methods.log").read_text(encoding="utf-8").splitlines() if ln}
+        # only valuation settings break the series; import lines in the log do not
+        method_dates = {ln.split(" ", 1)[0] for ln in (d / "methods.log").read_text(encoding="utf-8").splitlines()
+                        if ln.split(" ")[1:2] == ["config"]}
     print(f"{'date':<12}{'total':>16}{'change':>16}{'liquid':>16}{'investable':>16}")
     prev_total, prev_date = None, ""
     for f in snaps:
@@ -872,8 +1137,29 @@ def cmd_fees(args) -> None:
     missing = [h["symbol"] for h in hs if not h["expense_ratio"]]
     if missing:
         print(f"  no expense ratio for: {', '.join(missing)}")
-    print("  Plan administrative fees are separate; they appear in dollars on the quarterly statement.")
+    if args.project:
+        fee_projection(known, val, money(args.growth), money(args.admin_fee) if args.admin_fee else Decimal(0))
+    else:
+        print("  Plan administrative fees are separate; they appear in dollars on the quarterly statement. "
+              "`fees --project --admin-fee <dollars a year>` shows what both cost over 10 to 30 years.")
     print(DISCLAIMER)
+
+
+def fee_projection(hs: list[dict], val: Decimal, g: Decimal, admin: Decimal) -> None:
+    """What fund expenses and a yearly admin fee take from today's holdings, compounded, with no new money."""
+    if not Decimal(0) <= g < 1:
+        raise FwError("--growth is a yearly rate as a decimal, like 0.06")
+    print(f"  Fee drag on the {fmt(val)} with a known expense ratio, at an assumed {pct(g)} a year before fees, "
+          "no new contributions:")
+    print(f"    {'years':<7}{'fund expenses':>16}{'admin fees':>14}{'total lost':>16}{'value with fees':>18}")
+    for n in (10, 20, 30):
+        gross = sum((Decimal(h["value"]) * (1 + g) ** n for h in hs), Decimal(0))
+        net = sum((Decimal(h["value"]) * (1 + g - Decimal(h["expense_ratio"])) ** n for h in hs), Decimal(0))
+        fees_fv = admin * (((1 + g) ** n - 1) / g if g else Decimal(n))  # each year's fee, compounded
+        print(f"    {n:<7}{fmt(gross - net):>16}{fmt(fees_fv):>14}{fmt(gross - net + fees_fv):>16}"
+              f"{fmt(net - fees_fv):>18}")
+    print("  An assumption, not a forecast: change it with --growth. Admin fees come from the plan's 404a-5 "
+          "disclosure or the quarterly statement.")
 
 
 # ---------- returns ----------
@@ -903,6 +1189,27 @@ def xirr(flows: list[tuple[dt.date, Decimal]]) -> Decimal:
     return mid
 
 
+def twr(points: list[tuple[dt.date, Decimal]], flows: list[tuple[dt.date, Decimal]]) -> tuple[Decimal, int, int]:
+    """Time-weighted return: Modified Dietz between each pair of recorded balances, chain-linked.
+    points: (date, balance) oldest first; flows: (date, money into the account). A flow on a
+    balance date belongs to the period that ends there. Returns (cumulative return, periods, days)."""
+    growth, n, span = Decimal(1), 0, 0
+    for (a, va), (b, vb) in zip(points, points[1:]):
+        days = Decimal((b - a).days)
+        inside = [(t, f) for t, f in flows if a < t <= b]
+        net = sum((f for _, f in inside), Decimal(0))
+        base = va + sum((f * Decimal((b - t).days) / days for t, f in inside), Decimal(0))
+        if va == 0 and base == 0:
+            continue  # the account was empty and nothing came in until the period's last day
+        if base <= 0:
+            raise FwError(f"no time-weighted return for {a} to {b}: the starting balance plus weighted "
+                          "deposits is not positive")
+        growth *= 1 + (vb - va - net) / base
+        n += 1
+        span += (b - a).days
+    return growth - 1, n, span
+
+
 def cmd_returns(args) -> None:
     d = data_dir(args)
     need_account(d, args.account)
@@ -923,6 +1230,21 @@ def cmd_returns(args) -> None:
     r = xirr(flows)
     print(f"{args.account}: money-weighted return (XIRR) {pct(r)} a year from {min(t for t, _ in flows)} "
           f"to {bal['date']} over {len(flows)} cash flow(s)")
+    points = {row["date"]: Decimal(row["value"]) for row in hist if row["date"] <= bal["date"]}  # last per day
+    deposits = [(parse_date(row["date"]), Decimal(row["amount"])) for row in read_rows(d, "flows.csv")
+                if row["account"] == args.account]
+    if len(points) > 1:
+        try:
+            tw, periods, days = twr(sorted((parse_date(k), v) for k, v in points.items()), deposits)
+        except FwError as e:
+            print(f"  time-weighted return: not available ({e})")
+            tw, periods, days = None, 0, 0
+    if len(points) > 1 and tw is not None and periods:
+        shown = f"{pct((1 + tw) ** (Decimal(365) / days) - 1)} a year" if days >= 365 and tw > -1 else \
+            f"{pct(tw)} over {days} days (not annualised under a year)"
+        print(f"  time-weighted return (Modified Dietz, chain-linked over {periods} period(s)) {shown}")
+        print("  XIRR is the user's own result, timing of deposits included; time-weighted is what the "
+              "investments did, the number to set beside a fund or index.")
     print("  Deposits and contributions are flows into the account; record them with `fw.py flow add`.")
     print(DISCLAIMER)
 
@@ -1137,7 +1459,13 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--monthly", action="store_true", help="also record each month's last running balance")
     s.add_argument("--dry-run", action="store_true")
     s.set_defaults(fn=cmd_import_bofa)
-    mo =sub.add_parser("monarch", help="map Monarch account names to finwright accounts").add_subparsers(
+    s = imp.add_parser("ofx", help="QFX or OFX download: bank and card balances, brokerage positions")
+    s.add_argument("file")
+    s.add_argument("--account", help="the account, when the file holds one statement and no last 4 matches")
+    s.add_argument("--classes", help="SYM=class,SYM=class for brokerage positions")
+    s.add_argument("--dry-run", action="store_true")
+    s.set_defaults(fn=cmd_import_ofx)
+    mo = sub.add_parser("monarch", help="map Monarch account names to finwright accounts").add_subparsers(
         dest="sub", required=True)
     s = mo.add_parser("map")
     s.add_argument("name", nargs="?")
@@ -1201,13 +1529,17 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--as-of")
     s.add_argument("--save", action="store_true", help="write snapshots/DATE.json")
     s.add_argument("--json", action="store_true")
+    s.add_argument("--percent-only", action="store_true", help="shares of assets only, no dollars or account names")
     s.set_defaults(fn=cmd_networth)
     sub.add_parser("history", help="snapshots over time").set_defaults(fn=cmd_history)
     sub.add_parser("allocation", help="asset allocation and drift").set_defaults(fn=cmd_allocation)
-    s = sub.add_parser("fees", help="weighted expense ratio")
+    s = sub.add_parser("fees", help="weighted expense ratio and fee drag")
     s.add_argument("--account")
+    s.add_argument("--project", action="store_true", help="dollars lost to fees over 10, 20 and 30 years")
+    s.add_argument("--growth", default="0.06", help="assumed yearly return before fees for --project")
+    s.add_argument("--admin-fee", help="plan admin fees in dollars a year (404a-5 disclosure) for --project")
     s.set_defaults(fn=cmd_fees)
-    s = sub.add_parser("returns", help="money-weighted return for an account")
+    s = sub.add_parser("returns", help="money-weighted (XIRR) and time-weighted return for an account")
     s.add_argument("account")
     s.add_argument("--as-of")
     s.set_defaults(fn=cmd_returns)

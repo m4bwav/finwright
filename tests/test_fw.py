@@ -192,6 +192,7 @@ class FwTest(unittest.TestCase):
         out = self.fw("returns", "ira")
         # 10000*(1+r) + 7000*(1+r)**0.5 = 18000 gives r = 7.44% (Modified Dietz agrees: 1000/13500)
         self.assertIn("XIRR) 7.44%", out)
+        self.assertIn("over 1 period(s)) 7.40% a year", out)  # 1000 / (10000 + 7000 * 183/365)
 
     # ---- reference data ----
     def test_limits_known_and_unknown_year(self):
@@ -310,6 +311,221 @@ Date,Description,Amount,Running Bal.
         self.assertIn("warning: 2026-09-20 running balance", self.fw("import", "bofa", str(f), "chk", "--dry-run"))
         code, _, err = run("--data", self.d, "import", "bofa", str(f), "card")
         self.assertEqual(code, 2)
+
+    # ---- 0.6.0 ----
+    def test_holdings_reimport_replaces_and_keeps_expense_ratio(self):
+        self.household()
+        f = Path(self.tmp.name) / "positions.csv"
+        f.write_text("Symbol,Current Value\nVTI,\"$2,500.00\"\nSPAXX**,$500.00\n", encoding="utf-8")
+        args = ("import", "holdings", str(f), "--account", "brokerage", "--as-of", "2026-10-11",
+                "--classes", "VTI=us_stock,SPAXX=cash")
+        self.fw(*args)
+        self.fw("holding", "set", "brokerage", "VTI", "2500", "--asset-class", "us_stock",
+                "--expense-ratio", "0.0003", "--as-of", "2026-10-11")
+        self.assertIn("replaced 2 earlier row(s)", self.fw(*args))
+        self.assertIn("total $3,000.00", self.fw("allocation"))
+        fees = self.fw("fees")
+        self.assertIn("$0.75", fees)  # 2500 * 0.0003, carried over from the hand-entered row
+        self.assertIn("no expense ratio for: SPAXX", fees)
+
+    def test_fee_projection(self):
+        self.fw("account", "add", "401k", "--type", "tax_deferred")
+        self.fw("holding", "set", "401k", "FUND", "100000", "--asset-class", "us_stock", "--expense-ratio", "0.01")
+        out = self.fw("fees", "--project", "--admin-fee", "100")
+        # 100000 * (1.06^10 - 1.05^10) and 100 * (1.06^10 - 1) / 0.06
+        self.assertIn("$16,195.31", out)
+        self.assertIn("$1,318.08", out)
+        self.assertIn("$17,513.39", out)
+        self.assertIn("$150,060.70", out)  # 30 years, both together
+        code, _, err = run("--data", self.d, "fees", "--project", "--growth", "6")
+        self.assertEqual(code, 2)
+
+    def test_time_weighted_return(self):
+        self.fw("account", "add", "ira", "--type", "roth")
+        self.fw("balance", "set", "ira", "10000", "--as-of", "2025-01-01")
+        self.fw("flow", "add", "ira", "5000", "--date", "2025-07-01")
+        self.fw("balance", "set", "ira", "10000", "--as-of", "2025-07-01")  # halved, then 5000 added
+        self.fw("balance", "set", "ira", "20000", "--as-of", "2026-01-01")  # then doubled
+        out = self.fw("returns", "ira")
+        self.assertIn("over 2 period(s)) 0.00% a year", out)  # -50% then +100%
+        self.assertNotIn("XIRR) 0.00%", out)  # the deposit before the doubling helps the user's own result
+        r, n, days = fw.twr([(dt.date(2026, 1, 1), Decimal(1000)), (dt.date(2026, 7, 1), Decimal(1100))], [])
+        self.assertEqual((r, n, days), (Decimal("0.1"), 1, 181))
+
+    def test_returns_under_a_year_not_annualised(self):
+        self.fw("account", "add", "brk", "--type", "taxable")
+        self.fw("balance", "set", "brk", "1000", "--as-of", "2026-01-01")
+        self.fw("balance", "set", "brk", "1100", "--as-of", "2026-07-01")
+        self.assertIn("10.00% over 181 days (not annualised", self.fw("returns", "brk"))
+
+    def test_networth_percent_only(self):
+        self.household()
+        out = self.fw("networth", "--percent-only")
+        self.assertIn("52.59% of assets", out)  # 223500 / 425000
+        self.assertNotIn("$", out)
+        self.assertNotIn("checking", out)
+        shares = json.loads(self.fw("networth", "--percent-only", "--json"))
+        self.assertEqual(shares["assets_by_type"]["real_estate"], "0.7059")
+        self.assertNotIn("unvested", shares["assets_by_type"])
+
+    SGML = """OFXHEADER:100
+DATA:OFXSGML
+VERSION:102
+SECURITY:NONE
+ENCODING:USASCII
+
+<OFX>
+<SIGNONMSGSRSV1><SONRS><STATUS><CODE>0<SEVERITY>INFO</STATUS><DTSERVER>20261012120000</SONRS></SIGNONMSGSRSV1>
+<BANKMSGSRSV1><STMTTRNRS><TRNUID>1<STATUS><CODE>0<SEVERITY>INFO</STATUS>
+<STMTRS><CURDEF>USD<BANKACCTFROM><BANKID>000000000<ACCTID>000012341111<ACCTTYPE>CHECKING</BANKACCTFROM>
+<BANKTRANLIST><DTSTART>20260901<DTEND>20261010
+<STMTTRN><TRNTYPE>CREDIT<DTPOSTED>20260905<TRNAMT>2500.00<FITID>1<NAME>Widget Co &amp; Sons</STMTTRN>
+<STMTTRN><TRNTYPE>DEBIT<DTPOSTED>20260920<TRNAMT>-300.00<FITID>2<NAME>Card payment</STMTTRN>
+</BANKTRANLIST>
+<LEDGERBAL><BALAMT>3200.00<DTASOF>20261010120000.000[-5:EST]</LEDGERBAL>
+<AVAILBAL><BALAMT>3100.00<DTASOF>20261010</AVAILBAL>
+</STMTRS></STMTTRNRS>
+<STMTTRNRS><TRNUID>2<STMTRS><CURDEF>USD<BANKACCTFROM><BANKID>0<ACCTID>55559999<ACCTTYPE>SAVINGS</BANKACCTFROM>
+<LEDGERBAL><BALAMT>10.00<DTASOF>20261010</LEDGERBAL></STMTRS></STMTTRNRS></BANKMSGSRSV1>
+<CREDITCARDMSGSRSV1><CCSTMTTRNRS><TRNUID>3<CCSTMTRS><CURDEF>USD<CCACCTFROM><ACCTID>4111000000002222</CCACCTFROM>
+<LEDGERBAL><BALAMT>-450.25<DTASOF>20261009</LEDGERBAL>
+</CCSTMTRS></CCSTMTTRNRS></CREDITCARDMSGSRSV1>
+</OFX>
+"""
+
+    XML = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?OFX OFXHEADER="200" VERSION="220" SECURITY="NONE" OLDFILEUID="NONE" NEWFILEUID="NONE"?>
+<OFX><INVSTMTMSGSRSV1><INVSTMTTRNRS><TRNUID>1</TRNUID><STATUS><CODE>0</CODE><SEVERITY>INFO</SEVERITY></STATUS>
+<INVSTMTRS><DTASOF>20261011</DTASOF><CURDEF>USD</CURDEF>
+<INVACCTFROM><BROKERID>example.com</BROKERID><ACCTID>X99887766</ACCTID></INVACCTFROM>
+<INVTRANLIST><DTSTART>20260901</DTSTART><DTEND>20261011</DTEND></INVTRANLIST>
+<INVPOSLIST>
+<POSMF><INVPOS><SECID><UNIQUEID>000000101</UNIQUEID><UNIQUEIDTYPE>CUSIP</UNIQUEIDTYPE></SECID><HELDINACCT>CASH</HELDINACCT>
+<POSTYPE>LONG</POSTYPE><UNITS>10</UNITS><UNITPRICE>250</UNITPRICE><MKTVAL>2500.00</MKTVAL><DTPRICEASOF>20261011</DTPRICEASOF><MEMO></MEMO></INVPOS></POSMF>
+<POSDEBT><INVPOS><SECID><UNIQUEID>000000202</UNIQUEID><UNIQUEIDTYPE>CUSIP</UNIQUEIDTYPE></SECID><HELDINACCT>CASH</HELDINACCT>
+<POSTYPE>LONG</POSTYPE><UNITS>1000</UNITS><UNITPRICE>99</UNITPRICE><MKTVAL>990.00</MKTVAL><DTPRICEASOF>20261011</DTPRICEASOF></INVPOS></POSDEBT>
+<POSSTOCK><INVPOS><SECID><UNIQUEID>000000303</UNIQUEID><UNIQUEIDTYPE>CUSIP</UNIQUEIDTYPE></SECID><HELDINACCT>CASH</HELDINACCT>
+<POSTYPE>LONG</POSTYPE><UNITS>1</UNITS><UNITPRICE>100</UNITPRICE><MKTVAL>100.00</MKTVAL><DTPRICEASOF>20261011</DTPRICEASOF></INVPOS></POSSTOCK>
+</INVPOSLIST>
+<INVBAL><AVAILCASH>500.00</AVAILCASH><MARGINBALANCE>0</MARGINBALANCE><SHORTBALANCE>0</SHORTBALANCE></INVBAL>
+</INVSTMTRS></INVSTMTTRNRS></INVSTMTMSGSRSV1>
+<SECLISTMSGSRSV1><SECLIST>
+<MFINFO><SECINFO><SECID><UNIQUEID>000000101</UNIQUEID><UNIQUEIDTYPE>CUSIP</UNIQUEIDTYPE></SECID><SECNAME>Total Market &amp; Co</SECNAME><TICKER>TOTMX</TICKER></SECINFO></MFINFO>
+<DEBTINFO><SECINFO><SECID><UNIQUEID>000000202</UNIQUEID><UNIQUEIDTYPE>CUSIP</UNIQUEIDTYPE></SECID><SECNAME>Example Note</SECNAME></SECINFO><PARVALUE>1000</PARVALUE></DEBTINFO>
+</SECLIST></SECLISTMSGSRSV1></OFX>
+"""
+
+    def test_import_ofx_bank_and_card(self):
+        self.fw("account", "add", "chk", "--type", "cash", "--last4", "1111")
+        self.fw("account", "add", "visa", "--type", "credit_card", "--last4", "2222")
+        f = Path(self.tmp.name) / "download.qfx"
+        f.write_text(self.SGML, encoding="utf-8")
+        out = self.fw("import", "ofx", str(f))
+        self.assertIn("chk: bank ...1111 $3,200.00 as of 2026-10-10; 2 transaction(s)", out)
+        self.assertIn("visa: card ...2222 $450.25 as of 2026-10-09", out)
+        self.assertIn("imported 2 balance row(s)", out)
+        self.assertIn("not tracked (add each", out)
+        self.assertIn("bank ...9999", out)
+        self.assertNotIn("000012341111", out)
+        nw = json.loads(self.fw("networth", "--json"))
+        self.assertEqual(Decimal(nw["total"]), Decimal("2749.75"))
+        self.assertIn("2 already recorded", self.fw("import", "ofx", str(f)))
+        code, _, err = run("--data", self.d, "import", "ofx", str(f), "--account", "chk")
+        self.assertEqual(code, 2)
+        self.assertIn("3 statements", err)
+        f.write_text("Date,Amount\n", encoding="utf-8")
+        self.assertEqual(run("--data", self.d, "import", "ofx", str(f))[0], 2)
+
+    def test_import_ofx_brokerage_positions(self):
+        self.fw("account", "add", "brk", "--type", "taxable", "--last4", "7766")
+        f = Path(self.tmp.name) / "brokerage.ofx"
+        f.write_text(self.XML, encoding="utf-8")
+        out = self.fw("import", "ofx", str(f), "--classes", "TOTMX=us_stock")
+        self.assertIn("brk: invest ...7766 $4,090.00 as of 2026-10-11; 3 position(s) + cash $500.00", out)
+        self.assertIn("class 'other' for 000000303", out)
+        rows = {r["symbol"]: r["asset_class"] for r in fw.read_rows(Path(self.d), "holdings.csv")}
+        self.assertEqual(rows, {"TOTMX": "us_stock", "000000202": "bond", "000000303": "other", "CASH": "cash"})
+        self.fw("import", "ofx", str(f), "--classes", "TOTMX=us_stock")
+        self.assertEqual(len(fw.read_rows(Path(self.d), "holdings.csv")), 4)  # replaced, not doubled
+        self.assertIn("total $4,090.00", self.fw("allocation"))
+
+    def ofx_file(self, body: str, name: str = "x.qfx", encoding: str = "utf-8") -> str:
+        f = Path(self.tmp.name) / name
+        f.write_bytes(body.encode(encoding))
+        return str(f)
+
+    def test_ofx_review_cases(self):
+        # two accounts with the same last 4: refuse rather than guess
+        self.fw("account", "add", "chk", "--type", "cash", "--last4", "4444")
+        self.fw("account", "add", "sav", "--type", "cash", "--last4", "4444")
+        two = ("<OFX><STMTRS><BANKACCTFROM><ACCTID>00011114444</BANKACCTFROM><LEDGERBAL><BALAMT>100"
+               "<DTASOF>20261010</LEDGERBAL></STMTRS></OFX>")
+        code, _, err = run("--data", self.d, "import", "ofx", self.ofx_file(two))
+        self.assertEqual(code, 2)
+        self.assertIn("all end in 4444", err)
+        # comma decimal mark, and a file named after the full account number
+        f = self.ofx_file(two.replace("<BALAMT>100", "<BALAMT>1234,56"), "00011114444.qfx")
+        out = self.fw("import", "ofx", f, "--account", "chk")
+        self.assertIn("$1,234.56", out)
+        self.assertIn("****4444.qfx", out)
+        self.assertNotIn("00011114444", out + (Path(self.d) / "balances.csv").read_text(encoding="utf-8")
+                         + (Path(self.d) / "methods.log").read_text(encoding="utf-8"))
+        # a re-downloaded file with a new value for the same day replaces the balance
+        self.fw("import", "ofx", self.ofx_file(two.replace("<BALAMT>100", "<BALAMT>150")), "--account", "chk")
+        rows = [r for r in fw.read_rows(Path(self.d), "balances.csv") if r["account"] == "chk"]
+        self.assertEqual([r["value"] for r in rows], ["150"])
+
+    def test_ofx_empty_sgml_leaves_and_cp1252(self):
+        self.fw("account", "add", "brk", "--type", "taxable", "--last4", "7766")
+        body = ("OFXHEADER:100\r\nCHARSET:1252\r\n\r\n<OFX><INVSTMTRS><DTASOF>20261011<INVACCTFROM><BROKERID>b"
+                "<ACCTID>X99887766</INVACCTFROM><INVPOSLIST><POSMF><INVPOS><SECID><UNIQUEID>000000101"
+                "<UNIQUEIDTYPE>CUSIP</SECID><UNITS>10<UNITPRICE><MKTVAL>1000<DTPRICEASOF>20261011</INVPOS>"
+                "</POSMF></INVPOSLIST></INVSTMTRS><SECLIST><MFINFO><SECINFO><SECID><UNIQUEID>000000101"
+                "<UNIQUEIDTYPE>CUSIP</SECID><SECNAME>Café Fund<TICKER><FIID>9</SECINFO></MFINFO></SECLIST></OFX>")
+        out = self.fw("import", "ofx", self.ofx_file(body, encoding="cp1252"))
+        self.assertIn("brk: invest ...7766 $1,000.00", out)  # the empty <UNITPRICE> no longer swallows MKTVAL
+        tree = fw.ofx_tree(body)
+        self.assertEqual(fw.ofx_one(tree, "SECNAME"), "Café Fund")
+        self.assertEqual(fw.ofx_one(tree, "TICKER"), "")
+        code, _, err = run("--data", self.d, "import", "ofx",
+                           self.ofx_file(body.replace("<MKTVAL>1000", ""), "nomkt.qfx"))
+        self.assertEqual(code, 2)
+        self.assertIn("no amount", err)
+        xml = ('<?xml version="1.0"?><OFX xmlns="http://example.com/ofx"><STMTRS><BANKACCTFROM>'
+               "<ACCTID>1</ACCTID><BRANCHID></BRANCHID></BANKACCTFROM><MEMO/><LEDGERBAL><BALAMT>5</BALAMT>"
+               "<DTASOF>20261010</DTASOF></LEDGERBAL></STMTRS></OFX>")
+        self.assertEqual(fw.ofx_statements(fw.ofx_tree(xml))[0]["value"], Decimal("5"))
+
+    def test_review_holdings_and_twr_edges(self):
+        self.household()
+        f = Path(self.tmp.name) / "positions.csv"
+        f.write_text("Symbol,Current Value\nVTI,1000\n", encoding="utf-8")
+        args = ("import", "holdings", str(f), "--account", "brokerage", "--as-of", "2026-10-11", "--set-balance")
+        self.fw(*args)
+        f.write_text("Symbol,Current Value\nVTI,1500\n", encoding="utf-8")
+        self.assertIn("recorded balance $1,500.00", self.fw(*args))
+        nw = json.loads(self.fw("networth", "--json"))
+        self.assertEqual(Decimal(nw["by_type"]["taxable"]), Decimal("1500"))
+        f.write_text("Ticker,Current Value\nVTI,1500\n", encoding="utf-8")  # wrong column: refuse, keep data
+        self.assertEqual(run("--data", self.d, *args)[0], 2)
+        self.assertEqual(len(fw.read_rows(Path(self.d), "holdings.csv")), 1)
+        # an account that starts empty still gets a time-weighted return
+        self.fw("account", "add", "new", "--type", "roth")
+        self.fw("balance", "set", "new", "0", "--as-of", "2025-01-01")
+        self.fw("flow", "add", "new", "1000", "--date", "2025-02-01")
+        self.fw("balance", "set", "new", "1000", "--as-of", "2025-02-01")
+        self.fw("balance", "set", "new", "1100", "--as-of", "2026-02-01")
+        self.assertIn("over 1 period(s)) 10.00% a year", self.fw("returns", "new"))
+
+    def test_import_logs_do_not_mark_a_method_change(self):
+        self.fw("account", "add", "chk", "--type", "cash", "--last4", "1111")
+        self.fw("balance", "set", "chk", "100", "--as-of", "2026-09-30")
+        self.fw("networth", "--save", "--as-of", "2026-09-30")
+        f = Path(self.tmp.name) / "download.qfx"
+        f.write_text(self.SGML, encoding="utf-8")
+        self.fw("import", "ofx", str(f))
+        self.fw("networth", "--save")
+        self.assertNotIn("(method changed)", self.fw("history"))
 
     def test_hunt_file_created_for_old_data_folders(self):
         (Path(self.d) / "hunt.csv").unlink()

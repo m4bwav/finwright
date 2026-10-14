@@ -44,5 +44,6 @@ Net worth value = clean price / 100 x face + accrued interest. For TIPS, multipl
 ## Returns
 
 - `fw.py returns <account>` is a money-weighted return (XIRR): the user's own result, given when they put money in. It needs contributions recorded with `fw.py flow add`.
-- A time-weighted return (TWR, or Modified Dietz as an approximation) compares a fund against a benchmark. fw.py does not compute it yet.
+- The same command prints a time-weighted return: Modified Dietz in each period between two recorded balances, chain-linked. It removes the effect of when money went in, so it is the figure to set beside a fund or an index. More balance dates give a closer answer. Periods under a year are shown as a cumulative figure, not annualised (the GIPS convention).
+- Fee drag: `fw.py fees --project` compounds today's holdings at an assumed growth rate (`--growth`, default 0.06) with and without each fund's expense ratio, and adds the plan's yearly admin fee (`--admin-fee`, dollars) compounded at the same rate. No new contributions are assumed, so it understates the cost for someone still saving. Report the growth rate as an assumption.
 - Rebalancing: 5/25 bands (Swedroe). A class with a target of 20% or more is flagged when it drifts more than 5 points. A smaller class is flagged when it drifts more than 25% of its target.

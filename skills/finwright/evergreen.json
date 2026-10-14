@@ -72,8 +72,8 @@
   },
   "consolidate_every": 25,
   "tests": {
-    "last_run": "2026-10-13T21:00",
-    "harness": "unittest + claude -p headless",
+    "last_run": "2026-10-14T12:00",
+    "harness": "unittest + review subagent + claude -p headless",
     "env": "Windows 11",
     "cases": 5,
     "passed": 5,
@@ -82,5 +82,5 @@
     "last_failure": null,
     "research_after_days": null
   },
-  "version": "0.5.0"
+  "version": "0.6.0"
 }

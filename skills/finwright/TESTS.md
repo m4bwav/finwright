@@ -8,6 +8,11 @@ Entry shape: `### T-YYYYMMDD-n · date · harness · env · passed/total`, then 
 
 ## Runs
 
+### T-20261014-1 · 2026-10-14 · unittest + fresh-eyes review subagent · Windows 11, Python 3.14 and 3.11 · 3/3 suites
+- Unit: `tests/test_fw.py` 34/34 (11 new: OFX bank, card and brokerage files in both dialects, OFX review cases, holdings re-import, fee projection, time-weighted return, percent-only view, method-change marking), `tests/test_fw_guard.py` 14/14, `tests/test_leak_scan.py` 6/6.
+- Review: a subagent ran invented OFX, CSV and balance cases against the branch and reported 10 findings (2 high: shared last 4 gave one account another's balance; an empty SGML tag zeroed a position). All 10 were fixed and each has a regression test. It confirmed the Modified Dietz weights and that only the last 4 of an account number reaches output or files.
+- led to: C-20261014-1
+
 ### T-20261013-1 · 2026-10-13 · unittest + claude -p headless · Windows 11, Python 3.14 and 3.11 (hook and scanner also 3.9) · 3/3 suites, 2/2 live checks
 - Unit: `tests/test_fw.py` 23/23, `tests/test_fw_guard.py` 14/14, `tests/test_leak_scan.py` 6/6, in the repository and in the installed plugin copy. Python 3.11 caught an f-string that only 3.12+ parses (fixed before release).
 - Guard, live from the installed plugin: an echoed Alpaca order POST was denied by the PreToolUse hook (`permission_denials` in the JSON result).
