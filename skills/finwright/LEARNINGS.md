@@ -55,3 +55,11 @@ Entries here are public. They never name the user's institutions, employers, pla
 - Evidence: a three-employer search found two terminated plans (one merged into an acquirer's plan, one fully paid out) and one PEO participation, all from public filings.
 - Scope: skill
 - Status: active · helpful 1 · harmful 0 · last_confirmed 2026-10-13
+
+### L-007 · 2026-10-13 · `home-value-listing-sites-refuse-agents`: the big listing sites gave no home estimate to an agent
+- Trigger: the user asked the agent to look up their home's value; a Redfin property URL returned HTTP 405 to a fetch and a web search surfaced no Zillow page for the address.
+- Hypothesis: the large listing sites block automated fetches; local brokerages publish their own comps-based estimate pages per property, often keyed by the county appraisal district id, and those load.
+- Rule: search the address with the brokerage-site results in mind, fetch that page, record the estimate with `balance set home <value> --source <site> --method comps-avm`, keep the URL in the user's overlay so the next revaluation is one fetch, and cross-check against the mortgage servicer's equity estimate when the user has one.
+- Evidence: one lookup, two refused routes and one that worked, 2026-10-13
+- Scope: skill
+- Status: active · helpful 1 · harmful 0 · last_confirmed 2026-10-13
