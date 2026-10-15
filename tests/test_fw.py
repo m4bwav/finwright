@@ -532,5 +532,44 @@ ENCODING:USASCII
         self.assertIn("no searches yet", self.fw("hunt", "list"))
 
 
+    # ---- where a sum goes ----
+    def test_level_payment_and_amortize(self):
+        pay = fw.level_payment(Decimal("100000"), Decimal("6"), 360)
+        self.assertEqual(pay, Decimal("599.55"))
+        months, interest = fw.amortize(Decimal("100000"), Decimal("6"), pay)
+        self.assertIn(months, (359, 360))
+        self.assertTrue(Decimal("115000") < interest < Decimal("116000"))
+        self.assertEqual(fw.amortize(Decimal("1000"), Decimal("0"), Decimal("100")), (10, Decimal(0)))
+        self.assertEqual(fw.month_after(fw.dt.date(2026, 10, 12), 3), "2027-01")
+
+    def test_mortgage_lump_and_records(self):
+        self.household()  # mortgage balance 200,000
+        out = self.fw("mortgage", "--rate", "4", "--payment", "1500", "--lump", "10000")
+        self.assertIn("Mortgage $200,000.00 (mortgage as of 2026-10-01) at 4%", out)
+        self.assertIn("payments sooner", out)
+        self.assertIn("frees no monthly cash", out)
+        full = self.fw("mortgage", "--rate", "4", "--payment", "1500", "--balance", "10000", "--lump", "10000")
+        self.assertIn("paid off 2026-10 (7 payments sooner)", full)
+        sched = self.fw("mortgage", "--rate", "6", "--original", "100000", "--term", "360", "--balance", "100000")
+        self.assertIn("$599.55 a month (scheduled", sched)
+        self.assertEqual(run("--data", self.d, "mortgage", "--rate", "6", "--payment", "400",
+                             "--balance", "100000")[0], 2)  # payment below the interest
+        self.assertEqual(run("--data", self.d, "mortgage", "--rate", "6", "--balance", "100")[0], 2)
+
+    def test_compare_after_tax(self):
+        out = self.fw("compare", "10000", "--years", "1", "--option", "Savings=4:full",
+                      "--option", "Pay loan=3.875:none", "--option", "ibond", "--option", "Bills=4:federal",
+                      "--state", "0.05")
+        lines = [l for l in out.splitlines() if l.startswith("  ") and "%" in l and "$" in l]
+        self.assertTrue(lines[0].lstrip().startswith("Pay loan"))  # 3.875% untaxed beats 4% taxed
+        self.assertIn("3.88%", lines[0])
+        self.assertIn("$10,387.50", lines[0])
+        savings = next(l for l in lines if l.lstrip().startswith("Savings"))
+        self.assertIn("2.92%", savings)  # 4% x (1 - 0.22 - 0.05)
+        bills = next(l for l in lines if l.lstrip().startswith("Bills"))
+        self.assertIn("3.12%", bills)  # state-exempt
+        self.assertTrue(any(l.lstrip().startswith("I bond") for l in lines))
+        self.assertEqual(run("--data", self.d, "compare", "100", "--option", "bad")[0], 2)
+
 if __name__ == "__main__":
     unittest.main(verbosity=1)

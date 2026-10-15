@@ -16,6 +16,8 @@ The full reports from the first pass live in the repository's [research/](../../
 - **Time-sensitive numbers (dated in data/rates.json).** 2026 limits: 401k $24,500, catch-up $8,000, ages 60 to 63 $11,250, IRA $7,500 plus $1,100 catch-up, HSA $4,400 and $8,750. I bonds: 4.26% for May to Oct 2026 issues and 4.03% for Nov 2025 to Apr 2026, both with 0.90% fixed. EE bonds 2.40%. SCF 2025 median $215.9k. TreasuryDirect's rates page contradicted itself, so trust the dated press releases.
 - **Tooling (moving fast).** The big AI vendors now link accounts read-only through Plaid: Perplexity from 2026-04, ChatGPT Personal Finance from 2026-05 (Pro preview), Gemini through Google Wallet. An unannounced "Claude Money" section was spotted in the iOS app in 2026-09. Monarch's official MCP is the only vendor-run multi-institution personal finance MCP. No personal-finance Claude skill has real adoption, and nothing values TreasuryDirect bonds. That gap is why finwright builds its own.
 
+- **Where spare money goes (settled method, moving rates).** The order of priorities and the bond view of mortgage prepayment are stable across sources; the rates that decide a given case (savings, Treasuries, the I bond fixed rate) move weekly or every six months. references/next-dollar.md holds the method, the research file the dated rates. Medium confidence on forum wording (snippets).
+
 ## Open questions
 
 - SimpleFIN Bridge's current price, and whether `extra` carries any holdings (its page timed out).
@@ -37,6 +39,7 @@ Subject (the goal and the latest thinking on reaching it):
 - `IRS 401k IRA limits <next year>` (irs.gov newsroom; Notice for the year), `HSA limits Rev. Proc. <next year>`
 - `I bond rate November <year>` and `I bond rate May <year>` (treasurydirect.gov/news), EE rate in the same release
 - `Fiscal Data sb_value latest redemp_period` (query the API: `?sort=-redemp_period&page[size]=1&fields=redemp_period`)
+- `I bond fixed rate forecast <month year>` (tipswatch.com), `TIPS vs I bonds <year>`, `pay off mortgage or invest <year>` (bogleheads.org, kitces.com, morningstar.com), `best high yield savings rates <month year>`, Fed H.15 Treasury yields
 - `CFPB 1033 personal financial data rights <year>` (consumerfinance.gov, reginfo.gov OIRA status, Federal Register)
 - `SimpleFIN Bridge pricing`, `Plaid personal use trial`, `Schwab Trader API individual refresh token`, `IBKR Flex Web Service`
 - `Survey of Consumer Finances` (only when a new survey is due, late 2029)
@@ -74,6 +77,13 @@ Best sources (primary first): irs.gov newsroom, treasurydirect.gov/news, the fis
 ## Findings log
 
 Newest first. One entry per material finding; a quiet refresh gets one entry saying so. `Track` is subject, tooling, practice, or testing.
+
+### R-20261015-1 · 2026-10-15 · Where the next dollar goes: mortgage prepayment, I bonds, cash, investing
+- Summary: the planners' order (emergency fund, match, high-rate debt, full emergency fund, HSA and IRA, then a choice among taxable investing, low-rate mortgage prepayment and safe bonds) is the same in the Bogleheads wiki, the r/personalfinance flowchart and Vanguard's 2026 paper. Prepayment is a risk-free, usually tax-free bond at the loan rate and is compared with after-tax safe yields; a partial prepayment frees no cash flow until payoff, escrow goes on, and the forum middle path saves toward one lump payoff. I bonds: the fixed rate lasts 30 years; a forecast rise in the fixed rate (Tipswatch, 2026-10-14: at least 1.30% from 2026-11-01 against 0.90%) means waiting for November beats an October purchase; TIPS are preferred while the 5-year TIPS real yield (2.67%) far exceeds the fixed rate. Safe yields in mid-October 2026: 1-year Treasury 4.48%, 5-year 5.00%, best savings about 4.3%, national average savings 0.37%. Several sites refused fetches (Bogleheads 402, Reddit, Morningstar, White Coat Investor 403); their wording is from search snippets and marked so.
+- Track: subject, practice
+- Sources: research/2026-10-15-next-dollar-literature.md
+- Magnitude: 0.4 (new job; nothing in the skill contradicted)
+- Applied: C-20261015-1
 
 ### R-20261012-6 · 2026-10-12 · Safeguards against consequential actions
 - Summary: A plugin can ship hooks but not permission rules, so deny, ask, hard_deny and disableBypassPermissionsMode must go in user or managed settings. Rules are evaluated deny, then ask, then allow; deny holds in every mode. PreToolUse fields are `tool_name`, `tool_input`, `permission_mode` and `mcp_server`. Output is `hookSpecificOutput.permissionDecision` (allow, deny, ask, defer). Exit 2 blocks. `onFailure: block` needs 2.1.295 or later. UserPromptSubmit fires only on text the user submits, which is what makes a typed confirmation trustworthy. Auto mode misses about 17% of overeager actions and has no default rule for trades. MCP spec 2026-07-28: annotations are untrusted, payments and credentials must use URL-mode elicitation, human in the loop is a SHOULD. AP2 (signed mandates, moved to FIDO), ACP, Stripe restricted keys and approval rules, Robinhood's separate agent account. OWASP LLM06 and the Agentic Top 10 (Dec 2025). NIST CAISI: 57% to 80% attack success with retries. 93% of permission prompts are approved.

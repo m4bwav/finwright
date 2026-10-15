@@ -24,7 +24,7 @@ import urllib.request
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation, getcontext
 from pathlib import Path
 
-VERSION = "0.6.0"
+VERSION = "0.7.0"
 getcontext().prec = 28
 CENT = Decimal("0.01")
 DISCLAIMER = "Personal record keeping, not financial, tax or legal advice."
@@ -1249,6 +1249,121 @@ def cmd_returns(args) -> None:
     print(DISCLAIMER)
 
 
+# ---------- where a sum goes ----------
+
+def level_payment(principal: Decimal, rate: Decimal, months: int) -> Decimal:
+    """Monthly principal and interest on a fixed-rate loan; rate is a yearly percent like 3.875."""
+    r = rate / 1200
+    if r == 0:
+        return (principal / months).quantize(CENT, rounding=ROUND_HALF_UP)
+    return (principal * r / (1 - (1 + r) ** -months)).quantize(CENT, rounding=ROUND_HALF_UP)
+
+
+def amortize(bal: Decimal, rate: Decimal, payment: Decimal, extra: Decimal = Decimal(0)) -> tuple[int, Decimal]:
+    """Payments left on a fixed-rate loan and the interest paid on the way, interest rounded to the cent monthly."""
+    r = rate / 1200
+    months, interest = 0, Decimal(0)
+    while bal > 0:
+        i = (bal * r).quantize(CENT, rounding=ROUND_HALF_UP)
+        if payment + extra <= i:
+            raise FwError("the payment does not cover the interest; --payment is principal and interest only")
+        interest += i
+        bal = bal + i - payment - extra
+        if bal < 1:  # cents left by a rounded payment ride on the last one, as servicers do
+            bal = Decimal(0)
+        months += 1
+        if months > 1200:
+            raise FwError("more than 100 years to pay off; check the inputs")
+    return months, interest
+
+
+def month_after(day: dt.date, n: int) -> str:
+    m = day.year * 12 + day.month - 1 + n
+    return f"{m // 12}-{m % 12 + 1:02d}"
+
+
+def cmd_mortgage(args) -> None:
+    d = data_dir(args)
+    as_of = parse_date(args.as_of) if args.as_of else today()
+    rate = money(args.rate)
+    if args.balance:
+        bal, where = money(args.balance), "given"
+    else:
+        latest = latest_balances(d, as_of)
+        ids = [args.account] if args.account else [
+            a for a, r in accounts(d).items() if r["type"] == "mortgage" and a in latest]
+        if len(ids) != 1 or ids[0] not in latest:
+            raise FwError(f"pass --balance or --account (found {len(ids)} mortgage balances)")
+        bal, where = abs(Decimal(latest[ids[0]]["value"])), f"{ids[0]} as of {latest[ids[0]]['date']}"
+    if args.payment:
+        pay, how = money(args.payment), ""
+    elif args.original and args.term:
+        pay, how = level_payment(money(args.original), rate, args.term), " (scheduled, from --original and --term)"
+    else:
+        raise FwError("pass --payment (monthly principal and interest, no escrow) or --original and --term")
+    extra, lump = money(args.extra or 0), money(args.lump or 0)
+    if not Decimal(0) <= lump <= bal:
+        raise FwError("--lump must be between 0 and the balance")
+    n0, i0 = amortize(bal, rate, pay, extra)
+    plus = f" plus {fmt(extra)} extra principal" if extra else ""
+    print(f"Mortgage {fmt(bal)} ({where}) at {rate}%: principal and interest {fmt(pay)} a month{how}{plus}")
+    print(f"  Paid off {month_after(as_of, n0)} ({n0} payments), {fmt(i0)} interest still to pay")
+    if lump:
+        n1, i1 = amortize(bal - lump, rate, pay, extra)
+        print(f"  With {fmt(lump)} paid now: paid off {month_after(as_of, n1)} ({n0 - n1} payments sooner), "
+              f"{fmt(i0 - i1)} less interest")
+        print(f"  The payment stays {fmt(pay + extra)} a month until then: the {fmt(lump)} frees no monthly cash "
+              "until the loan is gone, and getting it back out takes a new loan.")
+        print(f"  It earns the loan's rate, {rate}% a year, with no risk; that is tax-free when the mortgage "
+              "interest is not itemized (most households take the standard deduction).")
+    print("  Escrow (property tax, insurance) goes on after payoff; it is not in these figures.")
+    print(DISCLAIMER)
+
+
+TAX_KINDS = {"none": "not taxed", "full": "federal and state", "federal": "federal only",
+             "deductible": "interest itemized"}
+
+
+def compare_option(spec: str, rates: dict) -> tuple[str, Decimal, str]:
+    """NAME=RATE[:TAX] with RATE a yearly percent, or 'ibond' for the current I bond composite rate."""
+    if spec.strip().lower() == "ibond":
+        cur = next((p for p in rates["savings_bond_rates"] if p["series"] == "I"), None)
+        if not cur:
+            raise FwError("no I bond rate in rates.json")
+        return f"I bond (to {cur['to']})", Decimal(cur["composite"]), "federal"
+    name, eq, rest = spec.partition("=")
+    rate, _, kind = rest.partition(":")
+    kind = kind or "full"
+    if not eq or not name or kind not in TAX_KINDS:
+        raise FwError(f"option {spec!r}: use NAME=RATE[:TAX], TAX one of {', '.join(TAX_KINDS)}, or 'ibond'")
+    return name, money(rate), kind
+
+
+def cmd_compare(args) -> None:
+    cfg = load_config(data_dir(args))
+    fed = money(args.federal) if args.federal else money(cfg["after_tax_rate"])
+    state = money(args.state)
+    amount, years = money(args.amount), args.years
+    rates = load_rates()
+    rows = []
+    for spec in args.option:
+        name, rate, kind = compare_option(spec, rates)
+        cut = {"none": Decimal(0), "federal": fed}.get(kind, fed + state)
+        y = rate / 100 * (1 - cut)
+        rows.append((y, name, rate, kind, amount * (1 + y) ** years))
+    rows.sort(key=lambda r: r[0], reverse=True)
+    print(f"{fmt(amount)} for {years} years, federal {pct(fed)}, state {pct(state)}; "
+          "after-tax yield, best first:")
+    print(f"  {'option':<26}{'rate':>8}  {'taxed':<18}{'after tax':>10}{'after ' + str(years) + ' years':>18}")
+    for y, name, rate, kind, fv in rows:
+        print(f"  {name[:25]:<26}{str(rate) + '%':>8}  {TAX_KINDS[kind]:<18}{pct(y):>10}{fmt(fv):>18}")
+    print("  Fixed and today's rates only: a stock fund has no promised rate, so it is a separate choice about risk. "
+          "Savings and I bond rates move; I bond tax can be deferred to redemption, which this ignores.")
+    print("  Access differs: savings same day, Treasury bills at maturity, an I bond after 12 months (3 months' "
+          "interest lost before 5 years), a mortgage prepayment only through a new loan.")
+    print(DISCLAIMER)
+
+
 # ---------- reference numbers ----------
 
 def cmd_limits(args) -> None:
@@ -1573,6 +1688,26 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--note")
     s.set_defaults(fn=cmd_hunt_update)
     hu.add_parser("list").set_defaults(fn=cmd_hunt_list)
+    s = sub.add_parser("mortgage", help="payoff date, interest left and what a lump sum or extra principal saves")
+    s.add_argument("--rate", required=True, help="yearly rate in percent, e.g. 3.875")
+    s.add_argument("--payment", help="monthly principal and interest, without escrow")
+    s.add_argument("--original", help="original loan amount, to work out the scheduled payment")
+    s.add_argument("--term", type=int, help="original term in months, e.g. 360")
+    s.add_argument("--balance", help="principal left (default: the mortgage account's latest balance)")
+    s.add_argument("--account")
+    s.add_argument("--extra", help="extra principal each month")
+    s.add_argument("--lump", help="a one-time prepayment now")
+    s.add_argument("--as-of")
+    s.set_defaults(fn=cmd_mortgage)
+    s = sub.add_parser("compare", help="after-tax yield of places a sum could go (savings, Treasuries, I bonds, "
+                       "paying down a loan)")
+    s.add_argument("amount")
+    s.add_argument("--option", action="append", required=True,
+                   help="NAME=RATE[:none|full|federal|deductible], or ibond; repeat for each")
+    s.add_argument("--years", type=int, default=5)
+    s.add_argument("--federal", help="marginal federal rate (default: config after_tax_rate)")
+    s.add_argument("--state", default="0", help="marginal state rate, e.g. 0.05")
+    s.set_defaults(fn=cmd_compare)
     s = sub.add_parser("redact", help="mask account numbers and SSNs in a text file")
     s.add_argument("file")
     s.add_argument("--out")

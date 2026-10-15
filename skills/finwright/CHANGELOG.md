@@ -4,6 +4,11 @@ Every change to [SKILL.md](SKILL.md) and its companions, newest first, each with
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261015-1 · 2026-10-15 · Where the next dollar goes: mortgage and compare commands, next-dollar reference
+- because: user request (what to do with the next $10,000: I bonds, investing, paying off a nearly paid mortgage or cash), R-20261015-1
+- files: scripts/fw.py (mortgage, compare, level_payment, amortize, month_after, compare_option), SKILL.md (description, Other jobs, References), references/next-dollar.md (new), research/2026-10-15-next-dollar-literature.md (new), research/README.md, RESEARCH.md, evals/evals.json (trigger-5), tests
+- `fw.py mortgage` prints the payoff month, the interest left and what a lump sum or monthly extra principal saves on a fixed-rate loan, from the mortgage account's latest balance or `--balance`, with the payment given or worked out from `--original` and `--term`; it says that a partial prepayment frees no monthly cash until payoff and that escrow goes on. `fw.py compare` ranks the after-tax yields of fixed-rate choices (`NAME=RATE:none|full|federal|deductible`, or `ibond` for the current composite from rates.json) and the value of the sum after N years. references/next-dollar.md holds the questions to ask first and what the forums, blogs and research say. Version 0.7.0; fw.py about 1,730 lines, still yellow.
+
 ### C-20261014-1 · 2026-10-14 · QFX/OFX import, time-weighted return, fee drag, percent-only view; holdings fixes
 - because: research/2026-10-12-data-access-routes.md (QFX downloads are the route every institution still offers), research/2026-10-12-net-worth-trackers.md (Empower's fee analyzer, Ghostfolio's restricted view, idempotent imports), the roadmap, T-20261014-1
 - files: scripts/fw.py (import ofx, ofx_tree, ofx_statements; twr in returns; fees --project, --growth, --admin-fee; networth --percent-only; add_balances, replace_holdings, keep_expense_ratios, parse_classes, signed_balance; history), SKILL.md (description, the net worth check, Other jobs), references/data-routes.md (QFX and OFX downloads), references/valuation.md (Returns), tests

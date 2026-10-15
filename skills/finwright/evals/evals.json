@@ -39,6 +39,15 @@
       "runs": 3
     },
     {
+      "id": "trigger-5",
+      "kind": "trigger",
+      "prompt": "I have $10k spare. Should I put it into I bonds, a brokerage account, or pay down my mortgage? Only $60k left on it at 3.5%.",
+      "expectations": [
+        "the finwright skill is invoked"
+      ],
+      "runs": 3
+    },
+    {
       "id": "decoy-1",
       "kind": "trigger",
       "decoy": true,
