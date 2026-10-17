@@ -4,6 +4,16 @@ Every change to [SKILL.md](SKILL.md) and its companions, newest first, each with
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261017-3 · 2026-10-17 · Importers split into fw_import.py
+- because: fw.py near the red size line after 0.8.0 (C-20261017-1); the maintainer approved the split ("do what you want", 2026-10-17)
+- files: scripts/fw.py (importers removed; build_parser loads fw_import; script registers itself as `fw`), scripts/fw_import.py (new: import balances, monarch map, import monarch, import bofa, import holdings, import ofx and their helpers), tests (OFX parser tests call fw_import), AGENTS.md, README.md, L-011
+- No behaviour change; the commands and their output are the same. fw.py is about 1,430 lines (yellow, well clear of red) and fw_import.py about 500 (green). fw.py puts its own folder on the path before loading the importers, because `python -I` leaves it off (L-011).
+
+### C-20261017-2 · 2026-10-17 · Use at your own risk; no promise against losses
+- because: user request ("add some 'use at your own risk' and something about how the author makes no promises against irreversible and total losses")
+- files: scripts/fw.py (DISCLAIMER), README.md (Use at your own risk, What it never does), SKILL.md (hard rule 6), references/rules.md (rule 15), references/new-listings.md (How to answer), plugin.json, .claude-plugin/plugin.json and marketplace.json (descriptions), tests
+- Every fw.py report now ends "Use at your own risk: guidance from your own records and published research, not a licensed adviser's advice. You decide, and losses, including total ones, are yours." The README has a Use at your own risk section: no warranty, and no promise or liability from the author or contributors for any loss, including total and irreversible ones (an investment going to zero, an irreversible trade or transfer, a changed rule or rate, an error). The skill says the same in any recommendation to buy, sell or move money. Version 0.8.1.
+
 ### C-20261017-1 · 2026-10-17 · Recommend with reasons; new listings (ipo and position commands, new-listings reference)
 - because: user request (run an IPO buying plan through finwright, improve it and release), user request ("part of finwright's mission is giving solid and reasonable financial advice"), R-20261017-1, T-20261017-1
 - files: scripts/fw.py (ipo, position, big, positive, short, quarter_end; latest_holdings takes --as-of; DISCLAIMER), SKILL.md (description, hard rule 6, Other jobs, References), references/new-listings.md (new), references/next-dollar.md (Investing, How to answer), references/rules.md (rule 15), research/2026-10-17-ipo-buying.md (new), research/README.md, RESEARCH.md, evals/evals.json (trigger-6, outcome-1), README.md, plugin.json, .claude-plugin/plugin.json and marketplace.json (descriptions), tests

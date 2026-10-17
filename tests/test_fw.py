@@ -12,6 +12,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "skills" / "finwright" / "scripts"))
 import fw  # noqa: E402
+import fw_import  # noqa: E402
 
 
 def run(*argv) -> tuple[int, str, str]:
@@ -102,7 +103,8 @@ class FwTest(unittest.TestCase):
         os.environ["FINWRIGHT_TODAY"] = "2026-12-31"
         out = self.fw("networth")
         self.assertIn("checking: balance is 91 days old", out)
-        self.assertIn("not a licensed adviser", out)
+        self.assertIn("not a licensed", out)
+        self.assertIn("Use at your own risk", out)
 
     def test_snapshot_and_history(self):
         self.household()
@@ -484,9 +486,9 @@ ENCODING:USASCII
                 "<UNIQUEIDTYPE>CUSIP</SECID><SECNAME>Café Fund<TICKER><FIID>9</SECINFO></MFINFO></SECLIST></OFX>")
         out = self.fw("import", "ofx", self.ofx_file(body, encoding="cp1252"))
         self.assertIn("brk: invest ...7766 $1,000.00", out)  # the empty <UNITPRICE> no longer swallows MKTVAL
-        tree = fw.ofx_tree(body)
-        self.assertEqual(fw.ofx_one(tree, "SECNAME"), "Café Fund")
-        self.assertEqual(fw.ofx_one(tree, "TICKER"), "")
+        tree = fw_import.ofx_tree(body)
+        self.assertEqual(fw_import.ofx_one(tree, "SECNAME"), "Café Fund")
+        self.assertEqual(fw_import.ofx_one(tree, "TICKER"), "")
         code, _, err = run("--data", self.d, "import", "ofx",
                            self.ofx_file(body.replace("<MKTVAL>1000", ""), "nomkt.qfx"))
         self.assertEqual(code, 2)
@@ -494,7 +496,7 @@ ENCODING:USASCII
         xml = ('<?xml version="1.0"?><OFX xmlns="http://example.com/ofx"><STMTRS><BANKACCTFROM>'
                "<ACCTID>1</ACCTID><BRANCHID></BRANCHID></BANKACCTFROM><MEMO/><LEDGERBAL><BALAMT>5</BALAMT>"
                "<DTASOF>20261010</DTASOF></LEDGERBAL></STMTRS></OFX>")
-        self.assertEqual(fw.ofx_statements(fw.ofx_tree(xml))[0]["value"], Decimal("5"))
+        self.assertEqual(fw_import.ofx_statements(fw_import.ofx_tree(xml))[0]["value"], Decimal("5"))
 
     def test_review_holdings_and_twr_edges(self):
         self.household()

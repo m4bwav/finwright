@@ -72,6 +72,14 @@ Entries here are public. They never name the user's institutions, employers, pla
 - Scope: skill
 - Status: active · helpful 1 · harmful 0 · last_confirmed 2026-10-17
 
+### L-011 · 2026-10-17 · `isolated-python-drops-script-folder`: a sibling module would not load under `python -I`
+- Trigger: after the importers moved to fw_import.py, `python -I fw.py import ofx --help` failed with ModuleNotFoundError, while the tests and a plain `python fw.py` passed.
+- Hypothesis: isolated mode leaves the script's folder off sys.path, and agents are told to run Python with -I when it reads downloaded files.
+- Rule: fw.py adds its own folder to sys.path before importing fw_import, and registers itself as `fw` when run as a script so `from fw import` in fw_import gets the running module (one FwError class, so errors are caught). Test the CLI with `python -I` from another folder after any module change.
+- Evidence: the 0.8.1 split, 2026-10-17
+- Scope: skill
+- Status: active · helpful 1 · harmful 0 · last_confirmed 2026-10-17
+
 ### L-010 · 2026-10-17 · `argparse-negative-list-value`: a comma list starting with a minus sign failed on Python 3.10 and 3.11
 - Trigger: `--ladder -10,-20` passed on Python 3.14 and failed with "expected one argument" on 3.10 and 3.11; the review subagent ran the older versions through uv.
 - Hypothesis: older argparse treats any value starting with `-` that is not a plain negative number as an option.

@@ -8,6 +8,10 @@ Entry shape: `### T-YYYYMMDD-n · date · harness · env · passed/total`, then 
 
 ## Runs
 
+### T-20261017-2 · 2026-10-17 · unittest + CLI under python -I · Windows 11, Python 3.14 and 3.10 · 3/3 suites
+- Unit: `tests/test_fw.py` 40/40 after the importer split (OFX parser tests now call fw_import), guard and scanner suites pass. CLI: `python -I fw.py import ofx --help` and `networth --percent-only` from another folder, after the L-011 fix.
+- led to: C-20261017-3, L-011
+
 ### T-20261017-1 · 2026-10-17 · unittest + fresh-eyes review subagent · Windows 11, Python 3.14, 3.11 and 3.10 · 3/3 suites
 - Unit: `tests/test_fw.py` 40/40 (3 new: big amounts and quarter ends, ipo values, multiples and dates with 8 refused inputs, position bands, emergency fund, ladder rounding, `--as-of` and 5 refused inputs), `tests/test_fw_guard.py` and `tests/test_leak_scan.py` pass.
 - Review: a subagent ran invented cases against the branch on 3.14, 3.11 and 3.10 and reported 16 findings (1 high: a negative-first ladder failed on 3.10 and 3.11, L-010). All were fixed and covered by the new tests; the reference it found missing was written.
