@@ -64,6 +64,22 @@ Entries here are public. They never name the user's institutions, employers, pla
 - Scope: skill
 - Status: active · helpful 1 · harmful 0 · last_confirmed 2026-10-13
 
+### L-013 · 2026-10-17 · `eval-runs-reach-home-defaults`: headless eval runs went to the default overlay and data paths
+- Trigger: with `FINWRIGHT_DATA` pointed at a fixture, 14 of 24 headless trigger runs tried to Read `~/.finwright/OVERLAY.md` and a few listed `~/finwright-data`; with `FINWRIGHT_OVERLAY` also set, a run still went for the default overlay path.
+- Hypothesis: Step 0 read as "check both places", and agents probe the home defaults while orienting, whatever the variables say.
+- Rule: the eval runner sets both variables to invented fixtures; Step 0 says the variable wins and the default is opened only when it is unset. Headless runs refuse Reads outside the cwd unless allowed, which is what kept the real overlay out of the traces; never pre-allow Read or Bash in eval runs, and keep traces outside every repository.
+- Evidence: T-20261017-3 traces (Read refused 14 of 14; `ls` showed file names only)
+- Scope: skill
+- Status: active · helpful 1 · harmful 0 · last_confirmed 2026-10-17
+
+### L-012 · 2026-10-17 · `windows-subprocess-cmd-shim`: the eval runner could not start `claude` on Windows
+- Trigger: `subprocess.run(["claude", ...])` raised FileNotFoundError (WinError 2) on Windows, where npm installs `claude` as a `.cmd` shim; the runner had only been written, never run there. Its trace parser then crashed on stream-json events whose `message` is a string.
+- Hypothesis: CreateProcess does not apply PATHEXT to a bare name; `shutil.which` does.
+- Rule: resolve CLI tools with `shutil.which(name) or name` before `subprocess.run`, and parse event streams defensively (check `isinstance(..., dict)` at each level). Run a new tool once on every platform it claims before recording it as done.
+- Evidence: T-20261017-3, two failed starts before the fix
+- Scope: skill
+- Status: active · helpful 1 · harmful 0 · last_confirmed 2026-10-17
+
 ### L-009 · 2026-10-17 · `pre-ipo-quotes-are-other-share-classes`: pre-IPO per-share prices did not describe the stock that would list
 - Trigger: the user asked what a fair price for an upcoming IPO would be. Quote pages for the same company on the same day showed per-share prices from about $20 to over $1,000, and news articles guessed IPO prices per share before any share count was public.
 - Hypothesis: secondary platforms quote different preferred series, before any pre-IPO split, and the company had declared unauthorized transfers void, so no per-share figure carries over; only market value (price times shares outstanding) compares across them.

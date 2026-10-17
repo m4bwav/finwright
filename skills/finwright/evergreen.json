@@ -79,15 +79,15 @@
   },
   "consolidate_every": 25,
   "tests": {
-    "last_run": "2026-10-17T18:00",
-    "harness": "unittest + review subagent",
-    "env": "Windows 11, Python 3.14/3.11/3.10",
-    "cases": 6,
-    "passed": 5,
+    "last_run": "2026-10-17T21:00",
+    "harness": "claude -p 2.1.281 headless (tools/run_trigger_evals.py, 3 runs) + unittest",
+    "env": "Windows 11, Python 3.14",
+    "cases": 8,
+    "passed": 8,
     "failed": 0,
     "failing": [],
     "last_failure": null,
     "research_after_days": null
   },
-  "version": "0.8.1"
+  "version": "0.8.2"
 }

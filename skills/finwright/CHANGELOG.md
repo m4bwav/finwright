@@ -4,6 +4,11 @@ Every change to [SKILL.md](SKILL.md) and its companions, newest first, each with
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261017-4 · 2026-10-17 · Overlay variable wins; description under the listing limit; eval runner fixed on Windows
+- because: T-20261017-3 (runs read the default overlay path with `FINWRIGHT_OVERLAY` set; the runner could not start `claude` on Windows and crashed on string `message` events), the evergreen-worth hook (description 1,600 characters, listings cut at 1,536)
+- files: SKILL.md (description, Step 0 overlay rule), tools/run_trigger_evals.py, plugin.json, .claude-plugin/plugin.json
+- Step 0 now says that when `$FINWRIGHT_OVERLAY` is set the skill reads that file and does not also open `~/.finwright`. The description drops two redundant trigger phrases, the platform list and some wording (1,527 characters). The eval runner resolves `claude` with `shutil.which` (Windows cannot start the bare name of a `.cmd` shim), skips stream-json events whose `message` is not an object, and points `FINWRIGHT_OVERLAY` at an invented overlay it writes into OUT_DIR. Version 0.8.2.
+
 ### C-20261017-3 · 2026-10-17 · Importers split into fw_import.py
 - because: fw.py near the red size line after 0.8.0 (C-20261017-1); the maintainer approved the split ("do what you want", 2026-10-17)
 - files: scripts/fw.py (importers removed; build_parser loads fw_import; script registers itself as `fw`), scripts/fw_import.py (new: import balances, monarch map, import monarch, import bofa, import holdings, import ofx and their helpers), tests (OFX parser tests call fw_import), AGENTS.md, README.md, L-011

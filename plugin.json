@@ -1,6 +1,6 @@
 {
   "name": "finwright",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "description": "Your own net worth records and checks, kept on your machine: bank, card, 401k, IRA, brokerage, savings bond (I and EE, valued from Treasury's value files), home and loan balances, with every number computed by a standard-library Python CLI in decimal arithmetic. Allocation drift, 401k fund fees, money-weighted returns, contribution limits, SCF benchmarks, statement redaction, old 401(k) hunts, and a researched map of the finance apps, MCP servers and data routes. Read-only, with a guard hook that blocks trades, transfers, payments and bank-site browser actions in every session unless the user types a one-time confirmation code. Recommends with reasons, you decide, at your own risk; never logs in. Evergreen.",
   "author": {
     "name": "Mark Rogers"

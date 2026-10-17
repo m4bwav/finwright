@@ -8,6 +8,12 @@ Entry shape: `### T-YYYYMMDD-n · date · harness · env · passed/total`, then 
 
 ## Runs
 
+### T-20261017-3 · 2026-10-17 · claude -p 2.1.281 headless via tools/run_trigger_evals.py, 3 runs per case · Windows 11 native, fixture data and overlay · 8/8 cases, 24/24 runs
+- Evidence: a Skill tool_use naming `finwright:finwright` in each stream-json trace; trigger-1 to trigger-6 fired 3/3 (trigger-4, the .qfx import, and trigger-6, the IPO buy, for the first time); decoy-1 went to chartwright 3/3, decoy-2 invoked no skill 3/3. Run once on 0.8.1 and again on 0.8.2 after the description trim, same result both times.
+- Not a pass/fail line, but recorded: with only `FINWRIGHT_DATA` isolated, 14 of 24 runs tried to Read the real default overlay; after the Step 0 rewording and `FINWRIGHT_OVERLAY` pointed at a fixture, 5 of 24 still did. Every such Read was refused by headless permissions (none succeeded); a few runs listed the default folders' file names with `ls`.
+- Unit suites on 0.8.2: 40/40, 14/14, 6/6.
+- led to: L-012, L-013, C-20261017-4
+
 ### T-20261017-2 · 2026-10-17 · unittest + CLI under python -I · Windows 11, Python 3.14 and 3.10 · 3/3 suites
 - Unit: `tests/test_fw.py` 40/40 after the importer split (OFX parser tests now call fw_import), guard and scanner suites pass. CLI: `python -I fw.py import ofx --help` and `networth --percent-only` from another folder, after the L-011 fix.
 - led to: C-20261017-3, L-011
