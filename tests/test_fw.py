@@ -47,7 +47,7 @@ class FwTest(unittest.TestCase):
         self.fw("account", "add", "mortgage", "--type", "mortgage")
         self.fw("account", "add", "visa", "--type", "credit_card")
         self.fw("account", "add", "match", "--type", "unvested")
-        self.fw("balance", "set", "checking", "$5,000.00", "--as-of", "2026-10-01", "--source", "statement")
+        self.fw("balance", "set", "checking", "$5000", "--as-of", "2026-10-01", "--source", "statement")
         self.fw("balance", "set", "brokerage", "20000", "--as-of", "2026-10-01")
         self.fw("balance", "set", "401k", "100000", "--as-of", "2026-09-30")
         self.fw("balance", "set", "house", "300000", "--as-of", "2026-06-01", "--source", "zillow")
@@ -102,7 +102,7 @@ class FwTest(unittest.TestCase):
         os.environ["FINWRIGHT_TODAY"] = "2026-12-31"
         out = self.fw("networth")
         self.assertIn("checking: balance is 91 days old", out)
-        self.assertIn("not financial", out)
+        self.assertIn("not a licensed adviser", out)
 
     def test_snapshot_and_history(self):
         self.household()
@@ -170,14 +170,14 @@ class FwTest(unittest.TestCase):
         self.household()
         f = Path(self.tmp.name) / "positions.csv"
         f.write_text("Account summary,,\n\nSymbol,Description,Quantity,Current Value\n"
-                     "VTI,Total market,10,\"$2,500.00\"\nSPAXX**,Money market,,$500.00\n"
+                     "VTI,Total market,10,\"$2,500.00\"\nSPAXX**,Money market,,$600.00\n"
                      "Pending activity,,,\n", encoding="utf-8")
         out = self.fw("import", "holdings", str(f), "--account", "brokerage", "--as-of", "2026-10-11",
                       "--classes", "VTI=us_stock,SPAXX=cash", "--units-col", "Quantity", "--set-balance")
         self.assertIn("imported 2 holding(s)", out)
-        self.assertIn("$3,000.00", out)
+        self.assertIn("$3,100.00", out)
         nw = json.loads(self.fw("networth", "--json"))
-        self.assertEqual(Decimal(nw["by_type"]["taxable"]), Decimal("3000.00"))
+        self.assertEqual(Decimal(nw["by_type"]["taxable"]), Decimal("3100.00"))
 
     def test_xirr_known_answer(self):
         # 1000 in, worth 1100 a year later = 10%
@@ -316,14 +316,14 @@ Date,Description,Amount,Running Bal.
     def test_holdings_reimport_replaces_and_keeps_expense_ratio(self):
         self.household()
         f = Path(self.tmp.name) / "positions.csv"
-        f.write_text("Symbol,Current Value\nVTI,\"$2,500.00\"\nSPAXX**,$500.00\n", encoding="utf-8")
+        f.write_text("Symbol,Current Value\nVTI,\"$2,500.00\"\nSPAXX**,$600.00\n", encoding="utf-8")
         args = ("import", "holdings", str(f), "--account", "brokerage", "--as-of", "2026-10-11",
                 "--classes", "VTI=us_stock,SPAXX=cash")
         self.fw(*args)
         self.fw("holding", "set", "brokerage", "VTI", "2500", "--asset-class", "us_stock",
                 "--expense-ratio", "0.0003", "--as-of", "2026-10-11")
         self.assertIn("replaced 2 earlier row(s)", self.fw(*args))
-        self.assertIn("total $3,000.00", self.fw("allocation"))
+        self.assertIn("total $3,100.00", self.fw("allocation"))
         fees = self.fw("fees")
         self.assertIn("$0.75", fees)  # 2500 * 0.0003, carried over from the hand-entered row
         self.assertIn("no expense ratio for: SPAXX", fees)
@@ -570,6 +570,67 @@ ENCODING:USASCII
         self.assertIn("3.12%", bills)  # state-exempt
         self.assertTrue(any(l.lstrip().startswith("I bond") for l in lines))
         self.assertEqual(run("--data", self.d, "compare", "100", "--option", "bad")[0], 2)
+
+    def test_big_amounts(self):
+        self.assertEqual(fw.big("1.5T"), Decimal("1500000000000"))
+        self.assertEqual(fw.big("$16.8b"), Decimal("16800000000"))
+        self.assertEqual(fw.big("250"), Decimal(250))
+        self.assertEqual(fw.short(Decimal("12500000000"), ""), "12.50B")
+        self.assertEqual(fw.quarter_end(dt.date(2026, 11, 26)), dt.date(2026, 12, 31))
+        self.assertEqual(fw.quarter_end(dt.date(2026, 3, 31)), dt.date(2026, 3, 31))
+
+    def test_ipo_valuation_and_dates(self):
+        out = self.fw("ipo", "--valuation", "1.2T", "--revenue-q", "10B", "--shares", "8B",
+                      "--list-date", "2026-11-20", "--lockup-days", "90")
+        self.assertIn("$1.20T", out)
+        self.assertIn("$150.00", out)  # 1.2T / 8B shares
+        self.assertIn("30.0x", out)  # 1.2T / (10B x 4)
+        self.assertNotIn("Over 40 times revenue", out)
+        self.assertIn("2026-11-30  underwriters' analysts", out)
+        self.assertIn("2026-12-31  first quarter end", out)
+        self.assertIn("2027-02-18  lock-up ends (90 days", out)
+        prices = self.fw("ipo", "--price", "41", "47", "--shares", "3B", "--offer", "44", "--revenue", "2.9B")
+        self.assertIn("$123.00B", prices)
+        self.assertIn("-6.82%", prices)  # 41 / 44 - 1
+        self.assertIn("Over 40 times revenue", prices)  # 141B / 2.9B
+        edge = self.fw("ipo", "--list-date", "2026-12-31")
+        self.assertIn("2027-03-31  first quarter end", edge)  # a quarter-end listing counts the next one
+        self.assertLess(edge.index("2027-01-10"), edge.index("2027-03-31"))  # dates in order
+        for bad in (["--price", "41"], [], ["--valuation", "0"], ["--valuation", "1T", "--offer", "-3"],
+                    ["--valuation", "1T", "--revenue", "-5B"], ["--list-date", "2026-11-20", "--lockup-days", "-5"],
+                    ["--valuation", "1T", "--shares", "0.5"], ["--valuation", "999999999T"]):
+            self.assertEqual(run("--data", self.d, "ipo", *bad)[0], 2, bad)
+
+    def test_position_concentration_and_ladder(self):
+        self.fw("account", "add", "checking", "--type", "cash")
+        self.fw("account", "add", "brokerage", "--type", "taxable")
+        self.fw("balance", "set", "checking", "41000", "--as-of", "2026-10-01")
+        self.fw("balance", "set", "brokerage", "59000", "--as-of", "2026-10-01")
+        self.fw("holding", "set", "brokerage", "NEWCO", "4100", "--asset-class", "us_stock", "--as-of", "2026-10-01")
+        out = self.fw("position", "7300", "--symbol", "newco", "--monthly-spend", "6100",
+                      "--price", "50", "--below", "0", "10", "20")
+        self.assertIn("If you buy $7,300.00 of NEWCO (already holding $4,100.00)", out)
+        self.assertIn("11.40% of investable assets", out)  # (7,300 + 4,100) / 100,000
+        self.assertIn("a concentrated position", out)
+        self.assertIn("$2,900.00 short of it", out)  # 6 x 6,100 - (41,000 - 7,300)
+        self.assertIn("limit       $45.00 (10% below): 54 shares, $2,430.00", out)  # 2,433.33 / 45
+        before = self.fw("position", "1700", "--symbol", "NEWCO", "--as-of", "2026-09-15")
+        self.assertNotIn("already holding", before)  # the holding is dated after --as-of
+        self.assertIn("no investable assets recorded", before)
+        small = self.fw("position", "1700", "--emergency-months", "3", "--monthly-spend", "6100")
+        self.assertIn("5% of investable assets or less", small)
+        self.assertIn("the emergency fund stays whole", small)
+        frac = self.fw("position", "1000", "--price", "30", "--fractional")
+        self.assertIn("33.3333 shares", frac)
+        cent = self.fw("position", "200", "--price", "1", "--below", "0", "0", "0", "--fractional")
+        self.assertIn("At most $199.98", cent)  # each third rounded down, never over the amount
+        none = self.fw("position", "1000", "--price", "3100")
+        self.assertIn("buys no whole share", none)
+        for bad in (["100", "--price", "0"], ["100", "--price", "10", "--below", "100"], ["0"],
+                    ["100", "--monthly-spend", "-100"], ["100", "--price", "10", "--below", "-5"]):
+            code, out, _ = run("--data", self.d, "position", *bad)
+            self.assertEqual(code, 2, bad)
+            self.assertEqual(out, "", bad)  # refused before printing anything
 
 if __name__ == "__main__":
     unittest.main(verbosity=1)

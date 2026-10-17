@@ -18,6 +18,8 @@ The full reports from the first pass live in the repository's [research/](../../
 
 - **Where spare money goes (settled method, moving rates).** The order of priorities and the bond view of mortgage prepayment are stable across sources; the rates that decide a given case (savings, Treasuries, the I bond fixed rate) move weekly or every six months. references/next-dollar.md holds the method, the research file the dated rates. Medium confidence on forum wording (snippets).
 
+- **New listings and single stocks (settled method, moving deals).** Ritter's tables: IPOs bought at the first-day close trailed the market by 20.5% over 3 years (median -25.7%), by 3.3% from the offer price; over 40 times sales they trailed by 58.5%. Lock-ups usually 180 days with a 1% to 3% average drop at expiry. FINRA Rule 5131 bars market orders to buy a new issue before it opens; Rule 2241 sets a 10-day analyst quiet period. FINRA cites 10% of investment assets as the most commonly suggested cap for one stock. Broker IPO programs and their rules change per deal. High confidence on Ritter and the rules, medium on broker pages.
+
 ## Open questions
 
 - SimpleFIN Bridge's current price, and whether `extra` carries any holdings (its page timed out).
@@ -77,6 +79,13 @@ Best sources (primary first): irs.gov newsroom, treasurydirect.gov/news, the fis
 ## Findings log
 
 Newest first. One entry per material finding; a quiet refresh gets one entry saying so. `Track` is subject, tooling, practice, or testing.
+
+### R-20261017-1 · 2026-10-17 · Buying a new listing: returns, lock-ups, retail access, first-day rules, concentration
+- Summary: Ritter's 2026 files: first-day return 19.0% average and 7.0% median (1980 to 2025), tech 31.2%; three-year returns from the first-day close -20.5% against the market (median -25.7%, about 60% lost money), from the offer price -3.3%; sales of $1B or more -2.1%; over 40 times sales -58.5%, under 5 times -1.3%. Lock-ups 180 days, -1.5% three-day abnormal return at expiry (Field and Hanka 2001). FINRA 2241 quiet period 10 days (not 25). FINRA 5131 bars market orders to buy a new issue before trading and defines a flip as a sale within 30 days; 5130 restricted persons. Fidelity, Robinhood, SoFi and E*TRADE retail IPO rules. FINRA's 10% single-stock rule of thumb. Vanguard: a lump sum beats 12-month staging two-thirds of the time. SEC and FINRA pre-IPO warnings; companies void unauthorized transfers. A large 2026 IPO peaked four days after listing and fell back to its offer price within six weeks (secondary sources).
+- Track: subject, practice
+- Sources: research/2026-10-17-ipo-buying.md
+- Magnitude: 0.4 (new job; nothing in the skill contradicted)
+- Applied: C-20261017-1
 
 ### R-20261015-1 · 2026-10-15 · Where the next dollar goes: mortgage prepayment, I bonds, cash, investing
 - Summary: the planners' order (emergency fund, match, high-rate debt, full emergency fund, HSA and IRA, then a choice among taxable investing, low-rate mortgage prepayment and safe bonds) is the same in the Bogleheads wiki, the r/personalfinance flowchart and Vanguard's 2026 paper. Prepayment is a risk-free, usually tax-free bond at the loan rate and is compared with after-tax safe yields; a partial prepayment frees no cash flow until payoff, escrow goes on, and the forum middle path saves toward one lump payoff. I bonds: the fixed rate lasts 30 years; a forecast rise in the fixed rate (Tipswatch, 2026-10-14: at least 1.30% from 2026-11-01 against 0.90%) means waiting for November beats an October purchase; TIPS are preferred while the 5-year TIPS real yield (2.67%) far exceeds the fixed rate. Safe yields in mid-October 2026: 1-year Treasury 4.48%, 5-year 5.00%, best savings about 4.3%, national average savings 0.37%. Several sites refused fetches (Bogleheads 402, Reddit, Morningstar, White Coat Investor 403); their wording is from search snippets and marked so.

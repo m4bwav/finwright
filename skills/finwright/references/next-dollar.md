@@ -2,7 +2,7 @@
 
 How to help the user decide where spare money goes: paying down the mortgage, I bonds, cash, or investing. This is what the planning forums, blogs and research agree on, where they disagree, and the questions to settle first. The survey behind it, with every source and the rates on the day it was written: [research/2026-10-15-next-dollar-literature.md](../../../research/2026-10-15-next-dollar-literature.md). Rates move every week, so check today's before quoting one.
 
-fw.py does the arithmetic: `mortgage` for the payoff month and what a lump sum saves, and `compare` for the after-tax yields of the choices. The model explains, and the user decides (hard rule 6).
+fw.py does the arithmetic: `mortgage` for the payoff month and what a lump sum saves, and `compare` for the after-tax yields of the choices. The model recommends with reasons, and the user decides (hard rule 6).
 
 ## Ask these before answering
 
@@ -57,11 +57,11 @@ None of the flowcharts puts I bonds or mortgage prepayment ahead of tax-advantag
 
 ## Investing
 
-- Tax-advantaged room first (match, HSA, IRA, 401(k)), then taxable. Over long periods stocks are expected to beat a low mortgage rate, but they promise nothing, so `compare` leaves them out. That is a separate decision about risk and time horizon. Choosing products or funds is a job for a fee-only fiduciary adviser.
+- Tax-advantaged room first (match, HSA, IRA, 401(k)), then taxable. Over long periods stocks are expected to beat a low mortgage rate, but they promise nothing, so `compare` leaves them out. That is a separate decision about risk and time horizon. Recommend the kind of fund (a broad, low-cost index fund fits most people) and the account it goes in; a single stock is a separate, smaller bet ([new-listings.md](new-listings.md)).
 
 ## How to answer
 
 1. Collect the facts above (`FW networth`, `FW limits`, `FW bond rates`, the user's answers).
 2. Run `FW mortgage --rate R --payment PI --lump AMOUNT` (or `--original` and `--term` to work out the payment) and `FW compare AMOUNT --years N --option ...` with today's rates, which the user can confirm on their bank's and Treasury's pages. Name each rate's source and date.
-3. Answer in the order above: fix the idle cash first, then the earliest step the user has not finished. For a low-rate loan, explain the after-tax comparison, the cash flow point and the lump-sum middle path. Give the user the choice, with the trade-off in their own numbers.
+3. Answer in the order above: fix the idle cash first, then the earliest step the user has not finished. For a low-rate loan, explain the after-tax comparison, the cash flow point and the lump-sum middle path. Recommend one, with the trade-off in their own numbers and what would change the answer; the user decides.
 4. End with fw.py's disclaimer line.

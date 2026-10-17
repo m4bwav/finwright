@@ -8,6 +8,12 @@ Entry shape: `### T-YYYYMMDD-n · date · harness · env · passed/total`, then 
 
 ## Runs
 
+### T-20261017-1 · 2026-10-17 · unittest + fresh-eyes review subagent · Windows 11, Python 3.14, 3.11 and 3.10 · 3/3 suites
+- Unit: `tests/test_fw.py` 40/40 (3 new: big amounts and quarter ends, ipo values, multiples and dates with 8 refused inputs, position bands, emergency fund, ladder rounding, `--as-of` and 5 refused inputs), `tests/test_fw_guard.py` and `tests/test_leak_scan.py` pass.
+- Review: a subagent ran invented cases against the branch on 3.14, 3.11 and 3.10 and reported 16 findings (1 high: a negative-first ladder failed on 3.10 and 3.11, L-010). All were fixed and covered by the new tests; the reference it found missing was written.
+- Not run: the new trigger-6 eval (headless runs wait for a session with the 0.8.0 plugin installed).
+- led to: C-20261017-1, L-010
+
 ### T-20261014-1 · 2026-10-14 · unittest + fresh-eyes review subagent · Windows 11, Python 3.14 and 3.11 · 3/3 suites
 - Unit: `tests/test_fw.py` 34/34 (11 new: OFX bank, card and brokerage files in both dialects, OFX review cases, holdings re-import, fee projection, time-weighted return, percent-only view, method-change marking), `tests/test_fw_guard.py` 14/14, `tests/test_leak_scan.py` 6/6.
 - Review: a subagent ran invented OFX, CSV and balance cases against the branch and reported 10 findings (2 high: shared last 4 gave one account another's balance; an empty SGML tag zeroed a position). All 10 were fixed and each has a regression test. It confirmed the Modified Dietz weights and that only the last 4 of an account number reaches output or files.

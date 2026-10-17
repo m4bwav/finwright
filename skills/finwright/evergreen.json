@@ -24,7 +24,8 @@
     "Aggregator prices: SimpleFIN Bridge $15/yr, Plaid Trial free 10 Items, Teller free 100 connections (2026-10-12, partly secondary)",
     "MCP landscape star counts and vendor MCP status in references/landscape.md (2026-10-12)",
     "CFPB 1033 stayed, rewrite at OIRA since 2026-08-06",
-    "Claude Code hook fields and permission rule order (built and tested on 2.1.281; onFailure needs 2.1.295+); MCP spec 2026-07-28 annotations untrusted"
+    "Claude Code hook fields and permission rule order (built and tested on 2.1.281; onFailure needs 2.1.295+); MCP spec 2026-07-28 annotations untrusted",
+    "Broker IPO program rules (Fidelity asset thresholds, Robinhood and SoFi flipping penalties) in references/new-listings.md (2026-10-17)"
   ],
   "contradiction": null,
   "events": [
@@ -62,6 +63,12 @@
       "m": 0.6,
       "interval_after": 30,
       "note": "safeguards research (R-20261012-6) and guard hook added on user request (C-20261012-2)"
+    },
+    {
+      "date": "2026-10-17",
+      "m": 0.4,
+      "interval_after": 30,
+      "note": "new-listings research (R-20261017-1); ipo and position commands; recommend-with-reasons mission (C-20261017-1)"
     }
   ],
   "counts": {
@@ -72,15 +79,15 @@
   },
   "consolidate_every": 25,
   "tests": {
-    "last_run": "2026-10-14T12:00",
-    "harness": "unittest + review subagent + claude -p headless",
-    "env": "Windows 11",
-    "cases": 5,
+    "last_run": "2026-10-17T18:00",
+    "harness": "unittest + review subagent",
+    "env": "Windows 11, Python 3.14/3.11/3.10",
+    "cases": 6,
     "passed": 5,
     "failed": 0,
     "failing": [],
     "last_failure": null,
     "research_after_days": null
   },
-  "version": "0.7.0"
+  "version": "0.8.0"
 }

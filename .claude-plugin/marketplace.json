@@ -10,7 +10,7 @@
     {
       "name": "finwright",
       "source": "./",
-      "description": "Your own net worth records and checks, kept on your machine: bank, card, 401k, IRA, brokerage, savings bond (I and EE, valued from Treasury's value files), home and loan balances, with every number computed by a standard-library Python CLI in decimal arithmetic. QFX/OFX and bank CSV imports, allocation drift, 401k fund fees and their cost over 30 years, money-weighted and time-weighted returns, a percent-only view for sharing, contribution limits, SCF benchmarks, statement redaction, and a researched map of the finance apps, MCP servers and data routes. Read-only: never logs in, never moves money, not financial advice. Evergreen."
+      "description": "Your own net worth records and checks, kept on your machine: bank, card, 401k, IRA, brokerage, savings bond (I and EE, valued from Treasury's value files), home and loan balances, with every number computed by a standard-library Python CLI in decimal arithmetic. QFX/OFX and bank CSV imports, allocation drift, 401k fund fees and their cost over 30 years, money-weighted and time-weighted returns, a percent-only view for sharing, contribution limits, SCF benchmarks, statement redaction, and a researched map of the finance apps, MCP servers and data routes. Recommends with reasons, you decide; read-only: never logs in, never moves money. Evergreen."
     }
   ]
 }

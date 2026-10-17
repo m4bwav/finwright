@@ -64,6 +64,22 @@ Entries here are public. They never name the user's institutions, employers, pla
 - Scope: skill
 - Status: active · helpful 1 · harmful 0 · last_confirmed 2026-10-13
 
+### L-009 · 2026-10-17 · `pre-ipo-quotes-are-other-share-classes`: pre-IPO per-share prices did not describe the stock that would list
+- Trigger: the user asked what a fair price for an upcoming IPO would be. Quote pages for the same company on the same day showed per-share prices from about $20 to over $1,000, and news articles guessed IPO prices per share before any share count was public.
+- Hypothesis: secondary platforms quote different preferred series, before any pre-IPO split, and the company had declared unauthorized transfers void, so no per-share figure carries over; only market value (price times shares outstanding) compares across them.
+- Rule: answer "what is a fair price" in market value and revenue multiple (`fw.py ipo --valuation ... --revenue-q ...`) until the S-1/A gives a range and a share count, then convert with `--price ... --shares ...`; never quote a pre-IPO per-share price as a guide.
+- Evidence: one IPO question, 2026-10-17; quote pages and news reports of that day
+- Scope: skill
+- Status: active · helpful 1 · harmful 0 · last_confirmed 2026-10-17
+
+### L-010 · 2026-10-17 · `argparse-negative-list-value`: a comma list starting with a minus sign failed on Python 3.10 and 3.11
+- Trigger: `--ladder -10,-20` passed on Python 3.14 and failed with "expected one argument" on 3.10 and 3.11; the review subagent ran the older versions through uv.
+- Hypothesis: older argparse treats any value starting with `-` that is not a plain negative number as an option.
+- Rule: take lists as space-separated `nargs="+"` values with a sign convention that keeps them positive (`--below 0 10 20`), and run the tests on 3.10 locally (`uv run --no-project --python 3.10 python tests/test_fw.py`) before release, not only in CI.
+- Evidence: review of the 0.8.0 branch, 2026-10-17
+- Scope: skill
+- Status: active · helpful 1 · harmful 0 · last_confirmed 2026-10-17
+
 ### L-008 · 2026-10-14 · `pr-merge-commit-uses-web-email`: GitHub's pull request merge commit carried the maintainer's personal email
 - Trigger: the first pull request on the repository failed the CI leak gate. The branch's commit used the no-reply identity and passed locally; the history scan flagged only the merge commit GitHub builds to test a pull request (refs/pull/N/merge), whose author was the account's web-commit email.
 - Hypothesis: GitHub authors web-made commits (test merges, merge and squash buttons) with the account's primary email unless "Keep my email addresses private" is on, so a repository can be clean while every GitHub-made commit is not.

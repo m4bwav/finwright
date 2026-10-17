@@ -15,7 +15,7 @@ Your own net worth records and checks, kept on your machine, with an AI agent do
   - contribution limits
   - Federal Reserve SCF benchmarks
 - **Old 401(k)s:** a tracked search per former employer, built on the free DOL, SSA and IRS routes.
-- **What it never does:** log in to a bank, store a password or move money. It is record keeping, not financial advice.
+- **What it never does:** log in to a bank, store a password or move money. It does recommend: after the numbers it says what it would do in your place and why, and you decide.
 - **Guard:** a hook runs in every Claude Code session while the plugin is installed. It blocks trades, transfers, payments, changes on money-holding services, browser actions on bank and broker sites, and shell writes to broker APIs. Each blocked call shows a one-time code, and only you typing `CONFIRM <code>` lets that exact call through once, still behind the normal permission dialog. See [skills/finwright/references/safeguards.md](skills/finwright/references/safeguards.md).
 
 ## Install

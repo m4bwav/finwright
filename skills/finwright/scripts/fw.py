@@ -24,10 +24,10 @@ import urllib.request
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation, getcontext
 from pathlib import Path
 
-VERSION = "0.7.0"
+VERSION = "0.8.0"
 getcontext().prec = 28
 CENT = Decimal("0.01")
-DISCLAIMER = "Personal record keeping, not financial, tax or legal advice."
+DISCLAIMER = "Guidance from your own records and published research, not a licensed adviser's advice; you decide."
 RATES_FILE = Path(__file__).resolve().parent.parent / "data" / "rates.json"
 SB_API = "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/sb_value"
 
@@ -1083,8 +1083,8 @@ def cmd_history(args) -> None:
 
 # ---------- allocation / fees ----------
 
-def latest_holdings(d: Path) -> list[dict]:
-    rows = read_rows(d, "holdings.csv")
+def latest_holdings(d: Path, as_of: dt.date | None = None) -> list[dict]:
+    rows = [r for r in read_rows(d, "holdings.csv") if as_of is None or r["date"] <= as_of.isoformat()]
     last = {}
     for r in rows:
         if r["date"] > last.get(r["account"], ""):
@@ -1361,6 +1361,143 @@ def cmd_compare(args) -> None:
           "Savings and I bond rates move; I bond tax can be deferred to redemption, which this ignores.")
     print("  Access differs: savings same day, Treasury bills at maturity, an I bond after 12 months (3 months' "
           "interest lost before 5 years), a mortgage prepayment only through a new loan.")
+    print(DISCLAIMER)
+
+
+# ---------- new listings and single positions ----------
+
+SCALE = {"K": 3, "M": 6, "B": 9, "T": 12}
+QUIET_DAYS = 10  # FINRA Rule 2241: underwriters' analysts wait 10 days after an IPO
+CONCENTRATION = (Decimal("0.05"), Decimal("0.10"))  # bands in references/new-listings.md
+
+
+def big(text: str) -> Decimal:
+    """money() that also reads K, M, B and T: 16.8B, 1.5T."""
+    s = str(text).strip().replace("$", "")
+    v = money(s[:-1]) * Decimal(10) ** SCALE[s[-1].upper()] if s and s[-1].upper() in SCALE else money(s)
+    if abs(v) >= Decimal(10) ** 18:
+        raise FwError(f"too large: {text!r}")
+    return v
+
+
+def positive(text: str, what: str, parse=money) -> Decimal:
+    v = parse(text)
+    if v <= 0:
+        raise FwError(f"{what} must be above zero: {text!r}")
+    return v
+
+
+def short(v: Decimal, unit: str = "$") -> str:
+    for k in ("T", "B", "M"):
+        if abs(v) >= Decimal(10) ** SCALE[k]:
+            return f"{unit}{(v / Decimal(10) ** SCALE[k]).quantize(CENT, rounding=ROUND_HALF_UP)}{k}"
+    return fmt(v) if unit else f"{v:,}"
+
+
+def quarter_end(day: dt.date) -> dt.date:
+    """The last day of the calendar quarter that holds `day`."""
+    m = (day.month - 1) // 3 * 3 + 3
+    return dt.date(day.year + m // 12, m % 12 + 1, 1) - dt.timedelta(days=1)
+
+
+def cmd_ipo(args) -> None:
+    shares = positive(args.shares, "--shares", big) if args.shares else None
+    if shares is not None and shares < 1:
+        raise FwError("--shares is a share count, at least 1")
+    if args.revenue_q and args.revenue:
+        raise FwError("pass --revenue (a year) or --revenue-q (latest quarter), not both")
+    revenue = (positive(args.revenue, "--revenue", big) if args.revenue else
+               positive(args.revenue_q, "--revenue-q", big) * 4 if args.revenue_q else None)
+    prices = [positive(p, "--price") for p in args.price or []]
+    values = [positive(v, "--valuation", big) for v in args.valuation or []]
+    offer = positive(args.offer, "--offer") if args.offer else None
+    if args.lockup_days < 0:
+        raise FwError("--lockup-days cannot be negative")
+    if (prices and not shares) or not (prices or values or args.list_date):
+        raise FwError("pass --valuation, or --price with --shares, or --list-date")
+    day = parse_date(args.list_date) if args.list_date else None
+    rows = [(p * shares, p) for p in prices] + [(v, v / shares if shares else None) for v in values]
+    if rows:
+        rev = (f"; revenue {short(revenue)} a year" + (" (latest quarter x 4)" if args.revenue_q else "")
+               if revenue else "")
+        print(f"New listing: {short(shares, '') + ' shares' if shares else 'no share count given'}{rev}")
+        print(f"  {'market value':>16}{'per share':>16}{'x revenue':>12}{'vs offer':>11}")
+        for cap, per in sorted(rows):
+            ps = f"{(cap / revenue).quantize(Decimal('0.1'), rounding=ROUND_HALF_UP)}x" if revenue else "-"
+            vs = pct(per / offer - 1) if offer and per else "-"
+            print(f"  {short(cap):>16}{fmt(per) if per else '-':>16}{ps:>12}{vs:>11}")
+        print("  Market value = per-share price x the share count in the prospectus (basic shares of every class; "
+              "counting options and RSUs makes it larger). Pre-IPO quotes are for other share classes and splits, "
+              "so they do not carry over.")
+        if revenue and any(cap / revenue > 40 for cap, _ in rows):
+            print("  Over 40 times revenue: in Ritter's data, IPOs priced there trailed the market by 58.5% over "
+                  "3 years when bought at the first close (references/new-listings.md).")
+    if day:
+        dates = [(day + dt.timedelta(days=QUIET_DAYS),
+                  f"underwriters' analysts may publish ({QUIET_DAYS} days, FINRA Rule 2241)"),
+                 (quarter_end(day + dt.timedelta(days=1)),
+                  "first quarter end as a public company (calendar quarters); its results come weeks later"),
+                 (day + dt.timedelta(days=args.lockup_days),
+                  f"lock-up ends ({args.lockup_days} days from listing; prospectuses often count from pricing, a "
+                  "day earlier, and early releases are common)")]
+        print(f"Dates after a {day.isoformat()} listing (check the prospectus):")
+        for when, what in sorted(dates):
+            print(f"  {when.isoformat()}  {what}")
+    print(DISCLAIMER)
+
+
+def cmd_position(args) -> None:
+    d = data_dir(args)
+    as_of = parse_date(args.as_of) if args.as_of else today()
+    amount = positive(args.amount, "amount")
+    spend = money(args.monthly_spend) if args.monthly_spend else None
+    if (spend is not None and spend < 0) or args.emergency_months < 0:
+        raise FwError("--monthly-spend and --emergency-months cannot be negative")
+    price = positive(args.price, "--price") if args.price else None
+    below = [money(s) for s in args.below or ["0"]]
+    if any(not Decimal(0) <= s < 100 for s in below):
+        raise FwError("--below steps are percents from 0 up to (not including) 100")
+    nw = compute_networth(d, as_of)
+    held = sum((Decimal(h["value"]) for h in latest_holdings(d, as_of)
+                if args.symbol and h.get("symbol", "").upper() == args.symbol.upper()), Decimal(0))
+    stake = amount + held
+    label = args.symbol.upper() if args.symbol else "one stock"
+    print(f"If you buy {fmt(amount)} of {label}" + (f" (already holding {fmt(held)})" if held else "")
+          + f", against the records as of {nw['as_of']}:")
+    for key, name in (("investable", "investable assets"), ("liquid", "liquid net worth"),
+                      ("total", "total net worth")):
+        base = Decimal(nw[key])
+        if base > 0:
+            print(f"  {pct(stake / base):>9} of {name} ({fmt(base)})")
+    inv = Decimal(nw["investable"])
+    low, high = CONCENTRATION
+    if inv <= 0:
+        print("  no investable assets recorded, so concentration cannot be measured")
+    else:
+        share = stake / inv
+        print("  " + ("over 10% of investable assets: a concentrated position" if share > high else
+                      "over 5% and up to 10% of investable assets: a large single holding" if share > low else
+                      "5% of investable assets or less"))
+    if spend is not None:
+        need = spend * args.emergency_months
+        left = Decimal(nw["by_type"].get("cash", "0")) - amount
+        print(f"  Cash after paying {fmt(left)}; {args.emergency_months} months of spending is {fmt(need)}: "
+              + ("the emergency fund stays whole" if left >= need else f"{fmt(need - left)} short of it"))
+    if price:
+        part = (amount / len(below)).quantize(CENT, rounding="ROUND_DOWN")
+        print(f"  A ladder of limit orders you could place, {fmt(part)} each, from a {fmt(price)} reference price:")
+        spent, empty = Decimal(0), False
+        for s in below:
+            lim = (price * (1 - s / 100)).quantize(CENT, rounding=ROUND_HALF_UP)
+            n = (part / lim).quantize(Decimal("0.0001") if args.fractional else Decimal(1), rounding="ROUND_DOWN")
+            spent += n * lim
+            empty = empty or n == 0
+            print(f"    limit {fmt(lim):>12} ({s}% below): {n} shares, {fmt(n * lim)}")
+        print(f"  At most {fmt(spent)} if every order fills; a limit order fills only at its price or better, "
+              "so the lower ones may never fill.")
+        if empty:
+            print("  An order buys no whole share at that price: use fewer steps, or --fractional if the broker "
+                  "sells fractions.")
     print(DISCLAIMER)
 
 
@@ -1708,6 +1845,28 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--federal", help="marginal federal rate (default: config after_tax_rate)")
     s.add_argument("--state", default="0", help="marginal state rate, e.g. 0.05")
     s.set_defaults(fn=cmd_compare)
+    s = sub.add_parser("ipo", help="a new listing in numbers: per-share price, market value, revenue multiple, "
+                       "dates after listing")
+    s.add_argument("--valuation", nargs="+", help="company values: 1.5T 2T")
+    s.add_argument("--price", nargs="+", help="per-share prices (the prospectus range: 120 140)")
+    s.add_argument("--shares", help="shares outstanding after the offering, from the prospectus: 12.5B")
+    s.add_argument("--revenue", help="revenue for a year: 67B")
+    s.add_argument("--revenue-q", help="latest quarter's revenue, annualised x 4: 16.8B")
+    s.add_argument("--offer", help="the offer price, to show each price against it")
+    s.add_argument("--list-date", help="first trading day, for the quiet period and lock-up dates")
+    s.add_argument("--lockup-days", type=int, default=180)
+    s.set_defaults(fn=cmd_ipo)
+    s = sub.add_parser("position", help="what a single-stock buy would be against the records: concentration, "
+                       "emergency fund, a ladder of limit orders")
+    s.add_argument("amount")
+    s.add_argument("--symbol", help="ticker, to add what is already held")
+    s.add_argument("--monthly-spend", help="monthly spending, to check the emergency fund after the buy")
+    s.add_argument("--emergency-months", type=int, default=6)
+    s.add_argument("--price", help="reference price for the ladder")
+    s.add_argument("--below", nargs="+", help="percents below --price, one limit order each: 0 10 20")
+    s.add_argument("--fractional", action="store_true", help="the broker sells fractional shares")
+    s.add_argument("--as-of")
+    s.set_defaults(fn=cmd_position)
     s = sub.add_parser("redact", help="mask account numbers and SSNs in a text file")
     s.add_argument("file")
     s.add_argument("--out")
