@@ -4,6 +4,11 @@ Every change to [SKILL.md](SKILL.md) and its companions, newest first, each with
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261021-3 · 2026-10-21 · Record names: repeat the date strip, drop filler words
+- because: L-014 (after 0.9.1 the real report still showed labels such as "Name 2022-04" from "Name 2022-04 to 2023-05", "Name again", and "none" or "not named" as institutions)
+- files: scripts/fw_mail.py (record_names), tests, plugin.json, .claude-plugin/plugin.json, evergreen.json, SKILL.md (version), scripts/fw.py (version)
+- The date and note strip now repeats until nothing changes and also removes a trailing "again", "later" or "briefly"; "none", "unknown", "n/a" and "not named" are never used as names. Version 0.9.2.
+
 ### C-20261021-2 · 2026-10-21 · Mail folders read read-only in one pass; `account update`; dates stripped from record names
 - because: L-015, L-014 (labels such as "Name 2019-2024" from a recordkeeper history), L-016, user request (sweep three more mailboxes from a desktop mail client and update the records to match)
 - files: scripts/fw_mail.py (`mbox_raw`, record_names), scripts/fw.py (`account update`, version), references/inbox-sweep.md (mail client folders, rescans, account update, balance series), tests, plugin.json, .claude-plugin/plugin.json, evergreen.json, SKILL.md (version)

@@ -170,8 +170,12 @@ def record_names(d: Path) -> list[tuple[str, str]]:
         text = re.sub(r"\([^)]*\)?", " ", text)  # '(Pat said ...)' is a note, not a name
         for n in re.split(r"[;/,]|\b(?:then|earlier|was|and)\b", text):
             n = re.sub(r"\.{3}\w+$", "", n).strip(" ?.'\"")
-            n = re.sub(r"\s+(?:(?:from|in|since|until|to|after|before)\b.*|\d{4}(?:-\d{2,4})?)$", "", n)  # dates
-            if len(n) >= 4:
+            prev = None
+            while prev != n:  # 'X 2022-04 to 2023-05' takes two passes; 'X again' is a note too
+                prev = n
+                n = re.sub(r"\s+(?:(?:from|in|since|until|to|after|before)\b.*|\d{4}(?:-\d{2,4})?|again|later|"
+                           r"briefly)$", "", n, flags=re.I)
+            if len(n) >= 4 and n.lower() not in ("none", "unknown", "n/a", "not named"):
                 names.setdefault(n, n)
     return sorted(names.items(), key=lambda kv: -len(kv[0]))
 

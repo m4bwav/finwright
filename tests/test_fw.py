@@ -700,10 +700,12 @@ ENCODING:USASCII
         names = [n for n, _ in fw_mail.record_names(Path(self.d))]
         self.assertEqual(sorted(names), ["Acme401k", "Oldpeo", "Widgetco", "Zenith"])
         self.fw("hunt", "add", "g", "--employer", "Gadgetco", "--recordkeeper",
-                "Oldpeo 2019-2024, then Newkeeper from mid-2024; Pastco in 2009")
+                "Oldpeo 2019-2024, then Newkeeper from mid-2024; Pastco in 2009; Midco 2022-04 to 2023-05, "
+                "Oldpeo again")
+        self.fw("hunt", "add", "n", "--employer", "Nullco", "--recordkeeper", "none")
         names = [n for n, _ in fw_mail.record_names(Path(self.d))]
-        self.assertTrue({"Newkeeper", "Pastco"} <= set(names), names)  # dates are notes, not part of a name
-        self.assertFalse([n for n in names if any(w in n for w in ("2019", "2024", "2009", "from", " in "))], names)
+        self.assertTrue({"Newkeeper", "Pastco", "Midco"} <= set(names), names)  # dates are notes, not names
+        self.assertFalse([n for n in names if any(w in n for w in ("20", "from", " in ", "again", "none"))], names)
         self.assertTrue(fw_mail.word_in("Acme Retirement", "your Acme401k account"))
         self.assertFalse(fw_mail.word_in("Pater Holdings", "Paternoster Row"))
 
