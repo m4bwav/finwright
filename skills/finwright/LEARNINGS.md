@@ -64,10 +64,26 @@ Entries here are public. They never name the user's institutions, employers, pla
 - Scope: skill
 - Status: active · helpful 1 · harmful 0 · last_confirmed 2026-10-13
 
+### L-016 · 2026-10-21 · `balance-series-traces-plan-moves`: a run of weekly balance mails showed which job a plan belonged to and where it went
+- Trigger: a recordkeeper's weekly balance mails, a former PEO's "your 401(k) went back to that recordkeeper" reply and the user's own memory pointed at different jobs; plan names in the mail named neither employer.
+- Hypothesis: a balance series records contributions (regular steps on paydays) and transfers (a gap or a step with no payday pattern); matched to employment dates, it says whose money it is and whether a promised transfer arrived.
+- Rule: when mail holds dated balances for one account, extract the series privately (the data folder or a scratch folder, never a repository) and look for payday steps, gaps and jumps; date the contribution window against the jobs, line the gaps up with recordkeeper and PEO letters, and compare the last mailed figure with any newer screenshot before deciding two accounts exist. Record the conclusion as hunt and account notes, not the figures.
+- Evidence: a four-mailbox sweep; the series settled a question a call script had been written for.
+- Scope: skill
+- Status: active · helpful 1 · harmful 0 · last_confirmed 2026-10-21
+
+### L-015 · 2026-10-21 · `mailbox-module-opens-for-writing`: Python's mailbox.mbox opened a live mail client's folder file read-write
+- Trigger: scanning a desktop mail client's folder files while it was still downloading; `mailbox.mbox` opens the file `rb+` (falling back to read-only only on a permission error) and indexes the whole file before the first message.
+- Hypothesis: the standard module is built for editing mailboxes, so it takes write access and a full index pass, which is unsafe on a file another program is appending to and slow on multi-gigabyte folders.
+- Rule: read mbox files with `fw_mail.mbox_raw`, one read-only pass split on `From ` lines after a blank line; `>From ` is unescaped. A folder that is still growing gives a partial result: compare file sizes a few minutes apart and scan again when they stop (rows are keyed by Message-ID, so a second scan adds only what is new).
+- Evidence: four accounts, about 8 GB of folder files, scanned in about 4 minutes; regression test `test_mail_reads_a_client_folder_file_read_only`
+- Scope: skill
+- Status: active · helpful 1 · harmful 0 · last_confirmed 2026-10-21
+
 ### L-014 · 2026-10-21 · `record-notes-became-sender-names`: free-text record fields made bad institution names for mail matching
 - Trigger: the first real mail scan grouped mail under an institution named after a parenthesised note in an account's institution field, and under a recordkeeper name ending in a comma ("X, then Y"); the note's first word was the user's own first name, so their sent mail matched it. A brand written with digits glued on ("Name401k") did not match the plain name.
 - Hypothesis: institution and recordkeeper fields hold notes, histories and question marks, not clean names; invented test data was too tidy to show it.
-- Rule: `fw_mail.record_names` drops parenthesised text, splits on separators and joining words (then, earlier, was, and), and strips punctuation; `word_in` lets digits follow a name but not letters. Run a new matcher on one real mailbox before release; the invented tests now hold each of these shapes.
+- Rule: `fw_mail.record_names` drops parenthesised text, splits on separators and joining words (then, earlier, was, and), strips punctuation and, since 0.9.1, trailing dates and date phrases ("2019-2024", "from mid-2024", "in 2009"); `word_in` lets digits follow a name but not letters. Run a new matcher on one real mailbox before release; the invented tests now hold each of these shapes.
 - Evidence: 0.9.0 first run over a few hundred real messages; regression test `test_mail_names_from_records_skip_notes_and_join_brands`
 - Scope: skill
 - Status: active · helpful 1 · harmful 0 · last_confirmed 2026-10-21

@@ -18,7 +18,6 @@ import email.utils
 import hashlib
 import html
 import json
-import mailbox
 import re
 from pathlib import Path
 
@@ -103,6 +102,24 @@ def is_mbox(p: Path) -> bool:
         return h.read(5) == b"From "
 
 
+def mbox_raw(path: Path):
+    """Yield each message's bytes in one read-only pass. mailbox.mbox opens the file for writing and indexes it
+    first, which is slow on multi-gigabyte files and unsafe on one a mail client is still writing."""
+    lines: list[bytes] = []
+    blank = True
+    with path.open("rb") as h:
+        for line in h:
+            if blank and line.startswith(b"From "):
+                if lines:
+                    yield b"".join(lines)
+                lines = []
+            else:
+                lines.append(line[1:] if line.startswith(b">From ") else line)
+            blank = not line.strip()
+    if lines:
+        yield b"".join(lines)
+
+
 def messages(path: Path, mailbox_name: str | None):
     """Yield normalised messages from a file or folder; raw text is checked cheaply before it is parsed."""
     if path.is_dir():
@@ -127,14 +144,9 @@ def messages(path: Path, mailbox_name: str | None):
         if QUICK.search(raw):
             yield parse_bytes(raw, name)
     elif is_mbox(path):
-        box = mailbox.mbox(str(path), create=False)
-        try:
-            for key in box.iterkeys():
-                raw = box.get_bytes(key)
-                if QUICK.search(raw):
-                    yield parse_bytes(raw, name)
-        finally:
-            box.close()
+        for raw in mbox_raw(path):
+            if QUICK.search(raw):
+                yield parse_bytes(raw, name)
     else:
         raise FwError(f"{path.name}: give an .mbox, .eml or .jsonl file, or a folder of them")
 
@@ -158,6 +170,7 @@ def record_names(d: Path) -> list[tuple[str, str]]:
         text = re.sub(r"\([^)]*\)?", " ", text)  # '(Pat said ...)' is a note, not a name
         for n in re.split(r"[;/,]|\b(?:then|earlier|was|and)\b", text):
             n = re.sub(r"\.{3}\w+$", "", n).strip(" ?.'\"")
+            n = re.sub(r"\s+(?:(?:from|in|since|until|to|after|before)\b.*|\d{4}(?:-\d{2,4})?)$", "", n)  # dates
             if len(n) >= 4:
                 names.setdefault(n, n)
     return sorted(names.items(), key=lambda kv: -len(kv[0]))

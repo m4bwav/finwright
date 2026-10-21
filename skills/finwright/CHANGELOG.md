@@ -4,6 +4,11 @@ Every change to [SKILL.md](SKILL.md) and its companions, newest first, each with
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261021-2 · 2026-10-21 · Mail folders read read-only in one pass; `account update`; dates stripped from record names
+- because: L-015, L-014 (labels such as "Name 2019-2024" from a recordkeeper history), L-016, user request (sweep three more mailboxes from a desktop mail client and update the records to match)
+- files: scripts/fw_mail.py (`mbox_raw`, record_names), scripts/fw.py (`account update`, version), references/inbox-sweep.md (mail client folders, rescans, account update, balance series), tests, plugin.json, .claude-plugin/plugin.json, evergreen.json, SKILL.md (version)
+- mbox files are now read by a read-only single pass instead of `mailbox.mbox`, which opened them for writing and indexed them first; a mail client's live folder files are safe to scan, and multi-gigabyte folders take about a minute each. `fw.py account update <id>` changes an account's name, type, institution or last 4 and appends dated notes (`--note`), for a plan that moved recordkeepers. Record names lose trailing dates and date phrases before mail matching. The reference adds where a desktop client keeps its folders, how to tell a download has finished, and reading a series of balance mails. Version 0.9.1.
+
 ### C-20261021-1 · 2026-10-21 · Inbox sweep: fw.py mail scan, sender and report; inbox-sweep reference
 - because: user request (read several mailboxes and track every retirement account mention, which account is where and for which job; "others might want someone to sort their financial situation out of their inbox"), web checks 2026-10-21 (Gmail's POP fetch and Gmailify retired in 2026; Thunderbird 148 signs in to Yahoo, AOL and AT&T with OAuth2; Yahoo has no built-in mbox export)
 - files: scripts/fw_mail.py (new), scripts/fw.py (mail subcommands, version), SKILL.md (description, Other jobs, References), references/inbox-sweep.md (new), evals/evals.json (trigger-7), tests, AGENTS.md, README.md, plugin.json, .claude-plugin/plugin.json

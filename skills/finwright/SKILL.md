@@ -2,7 +2,7 @@
 name: finwright
 description: "Keep the user's own money records and run their net worth check locally: bank and credit card balances, 401k and IRA holdings, savings bonds (I and EE, from Treasury's value files), brokerage accounts, home and loans, every number computed by the bundled fw.py. Also allocation drift, 401k fund fees and what they cost over the years, money-weighted and time-weighted returns, contribution limits, SCF net worth benchmarks, redacting statements, and which apps, MCP servers and data routes (SimpleFIN, Plaid, IBKR Flex, CSV exports) fit. Use whenever the user asks for a net worth check, 'what am I worth', 'update my balances', 'what are my I bonds worth', 'import this statement', 'am I on target', 'how much can I put in my 401k this year', 'what are my fund fees', 'how did my IRA do', or wants to find old 401(k)s from previous jobs or in their email, imports a Monarch export, a QFX or OFX download or a bank's activity CSV, wants a net worth summary without dollar amounts, asks how to get a bank's or broker's data in, asks where spare money should go (pay down the mortgage, I bonds, savings or investing, 'what should I do with $10k', 'should I pay off my house'), wants to buy a new IPO or one stock ('should I buy the IPO', 'what's a fair price', 'how much of it should I buy', 'buy after the first-day pop'), or asks which finance app or AI tool to use. Also for 'refresh finwright' and 'is finwright stale'. Recommends with reasons and the user decides; read-only: never logs in, never moves money."
 metadata:
-  version: 0.9.0
+  version: 0.9.1
 ---
 
 # finwright

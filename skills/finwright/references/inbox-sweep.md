@@ -13,6 +13,8 @@ The sweep is read-only. The user signs in to their own mail; the agent never ask
 | Yahoo, AOL, Outlook.com, other IMAP mail | Thunderbird (free) signed in to the account. Since 148.0 (2026-02-22) it signs in to Yahoo, AOL and AT&T with OAuth2, so the password goes to the provider's own page, never to the agent. Thunderbird keeps each folder as an mbox file | Add the account; under Server Settings set "Local Directory" to a folder outside the system profile (for example inside the data folder); let it download everything (Synchronization & Storage: keep messages on this computer) |
 | Any mail client's export | `.mbox` or a folder of `.eml` files | Export, put it in `inbox/` |
 
+Where a desktop client keeps mail it signed in to by itself: Thunderbird stores IMAP accounts under its profile, `ImapMail/<server>/` (Windows `%APPDATA%\Thunderbird\Profiles\<profile>\ImapMail`, macOS `~/Library/Thunderbird/Profiles/<profile>/ImapMail`, Linux `~/.thunderbird/<profile>/ImapMail`); a second account on the same server gets `<server>-1`, and `prefs.js` maps each folder to its address (`mail.server.serverN.userName` and `directory-rel`). Folder files have no extension; `.msf` files are indexes. Gmail's `[Gmail].sbd/All Mail` holds everything, so the labels and Inbox are copies; Spam and Trash are the only extras. The profile sits in the system's application data, so read only the mail folders the user named. A download is finished when the folder files stop growing: compare sizes a few minutes apart. Scanning a growing file is safe (fw.py reads it read-only) but partial; scan again when it stops.
+
 Things that no longer work: Gmail's "Check mail from other accounts" (POP) and Gmailify were retired during 2026 (new setups ended Q1 2026), so another provider's old mail cannot be pulled into Gmail that way. Auto-forwarding only sends new mail. Yahoo has no built-in mbox export; paid converters are not needed when Thunderbird is.
 
 ## 2. Searching through a connector
@@ -44,6 +46,8 @@ FW mail report --all --institution "some recordkeeper"
 
 - A plan or recordkeeper with no hunt row: `FW hunt add`, with the employer the mail names; old-401ks.md takes it from there.
 - A transfer, payout or rollover letter: `FW hunt update <id> --note` with the date and the receiving firm. Then follow the money to that firm. A plan that changed recordkeepers or PEOs sends exactly this letter.
+- A plan that changed recordkeepers: `FW account update <id> --institution <new firm> --note <date and the letter that says so>` keeps the account and its balance history.
+- A series of balance mails (weekly or quarterly) tells whose money it is and where it went: steps on paydays mark the contribution window, to set against the jobs' dates; a gap lines up with a move to another recordkeeper or PEO; a transfer in shows as a step without a payday pattern. Read the series in the data folder, never in a repository, and compare its last figure with any newer statement before concluding there are two accounts.
 - A statement balance in mail is a dated figure, not today's balance: record it only with `--as-of` set to the statement date and `--source email`. Ask for a current statement before counting it in net worth.
 - Fund-change and fee notices to an address the user still reads show the plan is still open under their name.
 - Phishing: an unknown sender that asks for a login, a code or a call to a number not on a statement is reported as suspect. Old-401k "finder" offers that want a percentage are the scam in old-401ks.md section 4.

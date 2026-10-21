@@ -22,7 +22,7 @@ import urllib.request
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation, getcontext
 from pathlib import Path
 
-VERSION = "0.9.0"
+VERSION = "0.9.1"
 getcontext().prec = 28
 CENT = Decimal("0.01")
 DISCLAIMER = ("Use at your own risk: guidance from your own records and published research, not a licensed "
@@ -280,6 +280,26 @@ def cmd_account_add(args) -> None:
                                    "institution": args.institution or "", "last4": args.last4 or "",
                                    "notes": args.notes or ""})
     print(f"added {args.id} ({t})")
+
+
+def cmd_account_update(args) -> None:
+    d = data_dir(args)
+    rows = read_rows(d, "accounts.csv")
+    row = next((r for r in rows if r["id"] == args.id), None)
+    if row is None:
+        raise FwError(f"no account {args.id!r}; `fw.py account list` shows them")
+    if args.type and args.type not in ASSET_TYPES | LIABILITY_TYPES:
+        raise FwError(f"type must be one of {sorted(ASSET_TYPES | LIABILITY_TYPES)}")
+    if args.last4 and not re.fullmatch(r"[A-Za-z0-9]{4}", args.last4):
+        raise FwError("--last4 takes exactly four letters or digits; never store a full account number")
+    for field in ("name", "type", "institution", "last4"):
+        if getattr(args, field):
+            row[field] = getattr(args, field)
+    if args.note:
+        entry = f"{today().isoformat()}: {args.note}"
+        row["notes"] = f"{row['notes']} | {entry}" if row["notes"] else entry
+    write_rows(d, "accounts.csv", rows)
+    print(f"updated {args.id}: {row['institution']}  {row['name']} ({row['type']})")
 
 
 def cmd_account_list(args) -> None:
@@ -1212,7 +1232,7 @@ def build_parser() -> argparse.ArgumentParser:
     s.set_defaults(fn=cmd_init)
     sub.add_parser("check", help="safety and freshness checks").set_defaults(fn=cmd_check)
 
-    acc = sub.add_parser("account", help="add or list accounts").add_subparsers(dest="sub", required=True)
+    acc = sub.add_parser("account", help="add, update or list accounts").add_subparsers(dest="sub", required=True)
     s = acc.add_parser("add")
     s.add_argument("id")
     s.add_argument("--type", required=True)
@@ -1221,6 +1241,11 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--last4")
     s.add_argument("--notes")
     s.set_defaults(fn=cmd_account_add)
+    s = acc.add_parser("update", help="rename, retype or re-home an account; --note appends a dated note")
+    s.add_argument("id")
+    for flag in ("--type", "--name", "--institution", "--last4", "--note"):
+        s.add_argument(flag)
+    s.set_defaults(fn=cmd_account_update)
     acc.add_parser("list").set_defaults(fn=cmd_account_list)
 
     bal = sub.add_parser("balance", help="record a balance").add_subparsers(dest="sub", required=True)

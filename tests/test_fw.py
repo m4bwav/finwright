@@ -699,6 +699,11 @@ ENCODING:USASCII
         self.fw("hunt", "add", "h", "--employer", "Widgetco", "--recordkeeper", "Oldpeo, then Acme401k")
         names = [n for n, _ in fw_mail.record_names(Path(self.d))]
         self.assertEqual(sorted(names), ["Acme401k", "Oldpeo", "Widgetco", "Zenith"])
+        self.fw("hunt", "add", "g", "--employer", "Gadgetco", "--recordkeeper",
+                "Oldpeo 2019-2024, then Newkeeper from mid-2024; Pastco in 2009")
+        names = [n for n, _ in fw_mail.record_names(Path(self.d))]
+        self.assertTrue({"Newkeeper", "Pastco"} <= set(names), names)  # dates are notes, not part of a name
+        self.assertFalse([n for n in names if any(w in n for w in ("2019", "2024", "2009", "from", " in "))], names)
         self.assertTrue(fw_mail.word_in("Acme Retirement", "your Acme401k account"))
         self.assertFalse(fw_mail.word_in("Pater Holdings", "Paternoster Row"))
 
@@ -709,6 +714,41 @@ ENCODING:USASCII
         rep = self.fw("mail", "report", "--institution", "old peo")
         self.assertIn("Old PEO Benefits  (1 messages", rep)
         self.assertIn("transfer", rep)
+
+    def test_account_update_rehomes_and_keeps_dated_notes(self):
+        self.fw("account", "add", "old401k", "--type", "tax_deferred", "--institution", "Oldkeeper")
+        out = self.fw("account", "update", "old401k", "--institution", "Newkeeper", "--name", "Gadgetco 401(k)",
+                      "--note", "plan moved recordkeepers")
+        self.assertIn("updated old401k: Newkeeper  Gadgetco 401(k)", out)
+        self.fw("account", "update", "old401k", "--note", "second note")
+        with open(Path(self.d) / "accounts.csv", newline="", encoding="utf-8") as h:
+            row = next(r for r in csv.DictReader(h) if r["id"] == "old401k")
+        self.assertRegex(row["notes"], r"^\d{4}-\d\d-\d\d: plan moved recordkeepers \| \d{4}-\d\d-\d\d: second note$")
+        for bad in (["nope", "--name", "x"], ["old401k", "--type", "nonsense"], ["old401k", "--last4", "123456"]):
+            code, _, err = run("--data", self.d, "account", "update", *bad)
+            self.assertNotEqual(code, 0, bad)
+
+    def test_mail_reads_a_client_folder_file_read_only(self):
+        import fw_mail
+        folder = Path(self.tmp.name) / "ImapMail" / "imap.example.com"
+        folder.mkdir(parents=True)
+        inbox = folder / "INBOX"  # a mail client's folder file: no extension, mbox inside
+        inbox.write_bytes(
+            b"From - Tue Jul 01 10:00:00 2025\nFrom: Acme Retirement <statements@example.com>\n"
+            b"Subject: Your 401(k) rollover\nMessage-ID: <r1@example.com>\n\nThe rollover was sent.\n"
+            b">From the plan desk: thanks.\n\n"
+            b"From - Wed Jul 02 10:00:00 2025\nFrom: Friend <pal@example.org>\nSubject: Lunch\n\nNoon?\n")
+        (folder / "INBOX.msf").write_bytes(b"// <!-- <mdb:mork:z v=\"1.4\"/> -->\n")
+        raws = list(fw_mail.mbox_raw(inbox))
+        self.assertEqual(len(raws), 2)
+        self.assertIn(b"\nFrom the plan desk", raws[0])
+        inbox.chmod(0o444)  # a file the client holds: opening it for writing would fail
+        try:
+            out = self.fw("mail", "scan", str(folder.parent), "--mailbox", "pat@example.com")
+        finally:
+            inbox.chmod(0o644)
+        self.assertIn("read 1 messages", out)
+        self.assertIn("1 mention retirement accounts", out)
 
 if __name__ == "__main__":
     unittest.main(verbosity=1)
