@@ -8,6 +8,13 @@ Entry shape: `### T-YYYYMMDD-n · date · harness · env · passed/total`, then 
 
 ## Runs
 
+### T-20261021-1 · 2026-10-21 · claude -p 2.1.281 headless via tools/run_trigger_evals.py, trigger-7 only, 3 runs · Windows 11 native, fixture data and overlay · 1/1 case, 3/3 runs; unit 45/45
+- Evidence: a Skill tool_use naming `finwright:finwright` in each stream-json trace; every run then read references/inbox-sweep.md as its first file, the route the case is about.
+- Not graded: the case's other two expectations (a way to get the mail in, no password request; `mail scan` in the plan) need the final answer, and the runner's `--max-turns 3` ends each run while it is still checking the overlay and data folder. A content check needs a longer run.
+- Recorded: 1 of 3 runs tried to Read the real default overlay (refused by headless permissions, as in T-20261017-3); 5 PowerShell tool calls were refused with "the command line is too long", a headless shell problem on this machine, not the skill.
+- Unit on 0.9.1: `tests/test_fw.py` 45/45 (new: read-only reading of a mail client folder file, `account update`, dates stripped from record names).
+- led to: C-20261021-2
+
 ### T-20261017-3 · 2026-10-17 · claude -p 2.1.281 headless via tools/run_trigger_evals.py, 3 runs per case · Windows 11 native, fixture data and overlay · 8/8 cases, 24/24 runs
 - Evidence: a Skill tool_use naming `finwright:finwright` in each stream-json trace; trigger-1 to trigger-6 fired 3/3 (trigger-4, the .qfx import, and trigger-6, the IPO buy, for the first time); decoy-1 went to chartwright 3/3, decoy-2 invoked no skill 3/3. Run once on 0.8.1 and again on 0.8.2 after the description trim, same result both times.
 - Not a pass/fail line, but recorded: with only `FINWRIGHT_DATA` isolated, 14 of 24 runs tried to Read the real default overlay; after the Step 0 rewording and `FINWRIGHT_OVERLAY` pointed at a fixture, 5 of 24 still did. Every such Read was refused by headless permissions (none succeeded); a few runs listed the default folders' file names with `ls`.
