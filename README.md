@@ -15,6 +15,7 @@ Your own net worth records and checks, kept on your machine, with an AI agent do
   - contribution limits
   - Federal Reserve SCF benchmarks
 - **Old 401(k)s:** a tracked search per former employer, built on the free DOL, SSA and IRS routes.
+- **Accounts in your email:** scan exported mail (Gmail Takeout, Thunderbird, any mbox or .eml, or a mail connector's results) for statements, transfer letters, tax forms and plan notices, and see which institution holds what and for which job. Keeps no message bodies; never asks for an email password.
 - **What it never does:** log in to a bank, store a password or move money. It does recommend: after the numbers it says what it would do in your place and why, and you decide, at your own risk ([Use at your own risk](#use-at-your-own-risk)).
 - **Guard:** a hook runs in every Claude Code session while the plugin is installed. It blocks trades, transfers, payments, changes on money-holding services, browser actions on bank and broker sites, and shell writes to broker APIs. Each blocked call shows a one-time code, and only you typing `CONFIRM <code>` lets that exact call through once, still behind the normal permission dialog. See [skills/finwright/references/safeguards.md](skills/finwright/references/safeguards.md).
 
@@ -62,7 +63,7 @@ Your own standing decisions and lessons can live in a private overlay, `~/.finwr
 
 ## Layout
 
-- `skills/finwright/`: the skill (SKILL.md, references, `data/rates.json`, `scripts/fw.py` and its importers `scripts/fw_import.py`, evergreen companions).
+- `skills/finwright/`: the skill (SKILL.md, references, `data/rates.json`, `scripts/fw.py`, its importers `scripts/fw_import.py` and the mail sweep `scripts/fw_mail.py`, evergreen companions).
 - `hooks/`: the consequential-action guard.
 - `research/`: the research reports the skill was built from (2026-10-12), every claim with a source.
 - `tests/`: unit tests for fw.py and the guard (`python tests/test_fw.py`, `python tests/test_fw_guard.py`). Invented numbers only.

@@ -58,6 +58,17 @@
       "runs": 3
     },
     {
+      "id": "trigger-7",
+      "kind": "trigger",
+      "prompt": "Can you go through my old email and figure out which retirement accounts I have, where they are, and which job each one came from?",
+      "expectations": [
+        "the finwright skill is invoked",
+        "the answer names a way to get the mail in (a connector, an mbox export or Thunderbird) and never asks for an email password",
+        "fw.py mail scan or mail report is part of the plan"
+      ],
+      "runs": 3
+    },
+    {
       "id": "decoy-1",
       "kind": "trigger",
       "decoy": true,

@@ -22,7 +22,7 @@ import urllib.request
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation, getcontext
 from pathlib import Path
 
-VERSION = "0.8.2"
+VERSION = "0.9.0"
 getcontext().prec = 28
 CENT = Decimal("0.01")
 DISCLAIMER = ("Use at your own risk: guidance from your own records and published research, not a licensed "
@@ -1201,6 +1201,7 @@ def build_parser() -> argparse.ArgumentParser:
     if here not in sys.path:  # python -I leaves the script's folder off the path
         sys.path.insert(0, here)
     import fw_import as fwi  # the importers, loaded here so `import fw` stays acyclic
+    import fw_mail as fwm
     p = argparse.ArgumentParser(prog="fw.py", description=__doc__.split("\n")[0])
     p.add_argument("--data", help="data folder (default $FINWRIGHT_DATA or ~/finwright-data)")
     p.add_argument("--version", action="version", version=f"finwright {VERSION}")
@@ -1363,6 +1364,24 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--note")
     s.set_defaults(fn=cmd_hunt_update)
     hu.add_parser("list").set_defaults(fn=cmd_hunt_list)
+    ma = sub.add_parser("mail", help="find retirement-account mentions in exported mail (mbox, eml, jsonl)"
+                        ).add_subparsers(dest="sub", required=True)
+    s = ma.add_parser("scan")
+    s.add_argument("paths", nargs="+", help="mbox, .eml or .jsonl files, or folders of them")
+    s.add_argument("--mailbox", help="label for these messages, e.g. the address they came from")
+    s.add_argument("--me", nargs="+", help="the user's own addresses, so their sent mail is marked 'sent'")
+    s.add_argument("--since", help="skip mail before this date")
+    s.set_defaults(fn=fwm.cmd_mail_scan)
+    s = ma.add_parser("sender", help="name the institution behind a sender domain (kept in the data folder)")
+    s.add_argument("domain")
+    s.add_argument("institution")
+    s.set_defaults(fn=fwm.cmd_mail_sender)
+    s = ma.add_parser("report", help="mentions grouped by institution, with plans, account endings and links")
+    s.add_argument("--institution")
+    s.add_argument("--all", action="store_true", help="every message, not only transfers, tax forms, "
+                   "statements and the user's own mail")
+    s.add_argument("--limit", type=int, default=8)
+    s.set_defaults(fn=fwm.cmd_mail_report)
     s = sub.add_parser("mortgage", help="payoff date, interest left and what a lump sum or extra principal saves")
     s.add_argument("--rate", required=True, help="yearly rate in percent, e.g. 3.875")
     s.add_argument("--payment", help="monthly principal and interest, without escrow")
