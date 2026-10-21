@@ -150,24 +150,23 @@ def sender_map(d: Path) -> dict[str, str]:
 def record_names(d: Path) -> list[tuple[str, str]]:
     """(name, label) pairs from the user's accounts and searches, longest first, for matching mail."""
     names: dict[str, str] = {}
-    for r in read_rows(d, "accounts.csv"):
-        for n in re.split(r"[;/()]", r.get("institution", "")):
-            n = re.sub(r"\.{3}\w+$", "", n).strip(" ?")
+    f = d / "hunt.csv"
+    fields = [r.get("institution", "") for r in read_rows(d, "accounts.csv")]
+    fields += [r.get(k, "") for r in (read_rows(d, "hunt.csv") if f.exists() else [])
+               for k in ("recordkeeper", "employer")]
+    for text in fields:
+        text = re.sub(r"\([^)]*\)?", " ", text)  # '(Pat said ...)' is a note, not a name
+        for n in re.split(r"[;/,]|\b(?:then|earlier|was|and)\b", text):
+            n = re.sub(r"\.{3}\w+$", "", n).strip(" ?.'\"")
             if len(n) >= 4:
                 names.setdefault(n, n)
-    f = d / "hunt.csv"
-    for r in read_rows(d, "hunt.csv") if f.exists() else []:
-        for field in ("recordkeeper", "employer"):
-            for n in re.split(r"[;/()]|, earlier| then ", r.get(field, "")):
-                n = n.strip(" ?")
-                if len(n) >= 4:
-                    names.setdefault(n, n)
     return sorted(names.items(), key=lambda kv: -len(kv[0]))
 
 
 def word_in(name: str, text: str) -> bool:
     first = re.split(r"[ ,]", name)[0]  # 'Acme Retirement Services' matches mail that says 'Acme'
-    return bool(re.search(rf"(?<![\w]){re.escape(first)}(?![\w])", text, re.I)) if len(first) >= 4 else False
+    # digits may follow ('Name401k' is a common brand), letters may not ('Pat' is not 'Patent')
+    return bool(re.search(rf"(?<![\w]){re.escape(first)}(?![A-Za-z])", text, re.I)) if len(first) >= 4 else False
 
 
 def institution_for(domain: str, display: str, text: str, senders: dict, names: list) -> str:

@@ -693,6 +693,15 @@ ENCODING:USASCII
         self.assertIn("hunt widgetco, account acme401k", rep)
         self.assertIn("? example.org  (1 messages", rep)  # the user's own question, no institution named
 
+    def test_mail_names_from_records_skip_notes_and_join_brands(self):
+        import fw_mail
+        self.fw("account", "add", "a", "--type", "tax_deferred", "--institution", "Zenith? (Pat said 'zenif')")
+        self.fw("hunt", "add", "h", "--employer", "Widgetco", "--recordkeeper", "Oldpeo, then Acme401k")
+        names = [n for n, _ in fw_mail.record_names(Path(self.d))]
+        self.assertEqual(sorted(names), ["Acme401k", "Oldpeo", "Widgetco", "Zenith"])
+        self.assertTrue(fw_mail.word_in("Acme Retirement", "your Acme401k account"))
+        self.assertFalse(fw_mail.word_in("Pater Holdings", "Paternoster Row"))
+
     def test_mail_sender_names_an_unknown_domain(self):
         root = self.mail_fixture()
         self.fw("mail", "sender", "example.net", "Old PEO Benefits")

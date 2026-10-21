@@ -64,6 +64,14 @@ Entries here are public. They never name the user's institutions, employers, pla
 - Scope: skill
 - Status: active · helpful 1 · harmful 0 · last_confirmed 2026-10-13
 
+### L-014 · 2026-10-21 · `record-notes-became-sender-names`: free-text record fields made bad institution names for mail matching
+- Trigger: the first real mail scan grouped mail under an institution named after a parenthesised note in an account's institution field, and under a recordkeeper name ending in a comma ("X, then Y"); the note's first word was the user's own first name, so their sent mail matched it. A brand written with digits glued on ("Name401k") did not match the plain name.
+- Hypothesis: institution and recordkeeper fields hold notes, histories and question marks, not clean names; invented test data was too tidy to show it.
+- Rule: `fw_mail.record_names` drops parenthesised text, splits on separators and joining words (then, earlier, was, and), and strips punctuation; `word_in` lets digits follow a name but not letters. Run a new matcher on one real mailbox before release; the invented tests now hold each of these shapes.
+- Evidence: 0.9.0 first run over a few hundred real messages; regression test `test_mail_names_from_records_skip_notes_and_join_brands`
+- Scope: skill
+- Status: active · helpful 1 · harmful 0 · last_confirmed 2026-10-21
+
 ### L-013 · 2026-10-17 · `eval-runs-reach-home-defaults`: headless eval runs went to the default overlay and data paths
 - Trigger: with `FINWRIGHT_DATA` pointed at a fixture, 14 of 24 headless trigger runs tried to Read `~/.finwright/OVERLAY.md` and a few listed `~/finwright-data`; with `FINWRIGHT_OVERLAY` also set, a run still went for the default overlay path.
 - Hypothesis: Step 0 read as "check both places", and agents probe the home defaults while orienting, whatever the variables say.
