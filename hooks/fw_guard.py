@@ -92,7 +92,13 @@ HTTP_WRITE = re.compile(
     r"-Method\s+['\"]?(Post|Put|Patch|Delete)\b|"
     r"requests\.(post|put|patch|delete)\(|httpx\.(post|put|patch|delete)\(|"
     r"method\s*[=:]\s*['\"](POST|PUT|PATCH|DELETE)['\"])", re.I)
-CHROME_PREFIX = "mcp__claude-in-chrome__"
+# "Withdraw" on a page is gated only beside one of these; withdrawing a submission,
+# application or consent moves no money.
+MONEY_CONTEXT = re.compile(
+    r"(\$\s?\d|\b(usd|funds?|cash|amount|balance|account|accounts|ira|roth|401\(?k\)?|"
+    r"403\(?b\)?|savings|checking|bank|brokerage|shares?|stocks?|crypto|bitcoin|btc|eth|"
+    r"wallet|atm|distribution|rollover|money)\b)", re.I)
+CHROME_PREFIX ="mcp__claude-in-chrome__"
 CHROME_NAV_TOOLS = {"navigate", "tabs_create_mcp"}
 CHROME_PAGE_TOOLS = {"computer", "form_input", "javascript_tool", "find", "read_page",
                      "get_page_text", "file_upload", "upload_image", "browser_batch",
@@ -218,8 +224,9 @@ def guard_chrome(event, short, tool_input):
             pre("deny", f"finwright: tab {tool_input.get('tabId')} is on the financial site "
                         f"{dom}; page actions there are not allowed.")
         text = json.dumps(tool_input)
-        if re.search(r"\b(pay now|transfer|buy|sell|place order|checkout|purchase|withdraw|"
-                     r"send money|wire)\b", text, re.I):
+        if re.search(r"\b(pay now|transfer|buy|sell|place order|checkout|purchase|"
+                     r"send money|wire)\b", text, re.I) or (
+                re.search(r"\bwithdraw", text, re.I) and MONEY_CONTEXT.search(text)):
             gate(event, "mcp__claude-in-chrome__" + short, tool_input)
     sys.exit(0)
 
