@@ -110,6 +110,12 @@ class GuardTest(unittest.TestCase):
         self.assertPasses("mcp__claude-in-chrome__navigate", {"url": "https://example.com", "tabId": 9})
         self.assertPasses("mcp__claude-in-chrome__computer", {"tabId": 9, "action": "left_click"})
 
+    def test_browser_withdraw_needs_money_context(self):
+        self.assertPasses("mcp__claude-in-chrome__navigate", {"url": "https://claude.ai/directory/manage", "tabId": 11})
+        self.assertPasses("mcp__claude-in-chrome__find", {"tabId": 11, "query": "Withdraw submission button"})
+        self.assertDenied("mcp__claude-in-chrome__find", {"tabId": 11, "query": "Withdraw $500 from savings"})
+        self.assertDenied("mcp__claude-in-chrome__computer", {"tabId": 11, "action": "type", "text": "withdraw funds"})
+
     # ---- confirmation ----
     def confirm(self, text):
         return self.run_guard("prompt", {"hook_event_name": "UserPromptSubmit", "prompt": text})

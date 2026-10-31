@@ -4,6 +4,11 @@ Every change to [SKILL.md](SKILL.md) and its companions, newest first, each with
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261030-1 · 2026-10-30 · Guard: "withdraw" on a web page needs money nearby
+- because: user request (the guard blocked withdrawing a plugin directory submission)
+- files: hooks/fw_guard.py (MONEY_CONTEXT, guard_chrome), tests/test_fw_guard.py (test_browser_withdraw_needs_money_context)
+- A browser action that says "withdraw" is gated only when the same input names money (a dollar amount, funds, cash, an account, savings, an IRA, shares, crypto and the like). Bank and broker sites stay blocked outright. Unreleased.
+
 ### C-20261021-3 · 2026-10-21 · Record names: repeat the date strip, drop filler words
 - because: L-014 (after 0.9.1 the real report still showed labels such as "Name 2022-04" from "Name 2022-04 to 2023-05", "Name again", and "none" or "not named" as institutions)
 - files: scripts/fw_mail.py (record_names), tests, plugin.json, .claude-plugin/plugin.json, evergreen.json, SKILL.md (version), scripts/fw.py (version)
