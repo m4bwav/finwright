@@ -209,7 +209,8 @@ class FwTest(unittest.TestCase):
 
     def test_check_flags_rates_after_change_date(self):
         self.assertEqual(run("--data", self.d, "check")[0], 0)
-        os.environ["FINWRIGHT_TODAY"] = "2026-11-02"
+        due = json.loads((Path(fw.__file__).parent.parent / "data" / "rates.json").read_text(encoding="utf-8"))["next_change"]["i_bond_rate"]["date"]
+        os.environ["FINWRIGHT_TODAY"] = (dt.date.fromisoformat(due) + dt.timedelta(days=1)).isoformat()
         code, out, _ = run("--data", self.d, "check")
         self.assertEqual(code, 1)
         self.assertIn("i_bond_rate", out)
@@ -564,9 +565,10 @@ ENCODING:USASCII
                       "--option", "Pay loan=3.875:none", "--option", "ibond", "--option", "Bills=4:federal",
                       "--state", "0.05")
         lines = [l for l in out.splitlines() if l.startswith("  ") and "%" in l and "$" in l]
-        self.assertTrue(lines[0].lstrip().startswith("Pay loan"))  # 3.875% untaxed beats 4% taxed
-        self.assertIn("3.88%", lines[0])
-        self.assertIn("$10,387.50", lines[0])
+        fixed = [l for l in lines if not l.lstrip().startswith("I bond")]  # I bond rate moves twice a year
+        self.assertTrue(fixed[0].lstrip().startswith("Pay loan"))  # 3.875% untaxed beats 4% taxed
+        self.assertIn("3.88%", fixed[0])
+        self.assertIn("$10,387.50", fixed[0])
         savings = next(l for l in lines if l.lstrip().startswith("Savings"))
         self.assertIn("2.92%", savings)  # 4% x (1 - 0.22 - 0.05)
         bills = next(l for l in lines if l.lstrip().startswith("Bills"))
