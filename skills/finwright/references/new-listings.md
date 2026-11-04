@@ -38,6 +38,22 @@ How to help a user who wants to buy a company that is going public, or any singl
   - For one new stock, whose median path after the pop is down, a ladder of limit orders below the first-day price is a reasonable way to limit regret and timing risk.
   - Say plainly that this is the reason for the ladder.
 
+## A value of your own
+
+Source: Damodaran, *The Little Book of Valuation* (Wiley 2011; updated 2024), ch. 1, 4, 5, 6. Its worked figures are from 2009 and 2010: use the method, not the numbers.
+
+- **Two different questions.** Intrinsic value asks what the cash flows and risk are worth. Relative value asks whether it is cheap against similar companies. They can disagree, and the book's own Under Armour example does. Say which one you are answering.
+- **Put the user's reason on paper first.** Why this company? Do they already own it or like its founder? The more someone wants a conclusion, the less the valuation is worth. Read the filing before opinion pieces.
+- **Check a revenue multiple four ways:**
+  - Same definition across the group: trailing or forward, and market value or enterprise value. Market value to revenue makes an indebted company look cheap, so use `FW ipo --net-debt` when debts differ.
+  - Compare with the median. In the book's January 2010 table, the EV/sales mean was 13.35 and the median 1.13.
+  - Ask why it differs from peers: growth, risk and margin. A high multiple with no path to a margin is the warning.
+  - Choose peers by cash flows, growth and risk, not only by sector, and use the current figure. A multiple goes stale in months.
+- **A young company with little revenue:** estimate revenue about five years out from a stated market size and share, use the multiple mature peers trade at today (not one that assumes today's growth), then discount and allow for failure. `FW forward-value` does the arithmetic. The book takes the failure rate from sector survival data, adjusted for the company's cash and access to capital. Run a low, middle and high case, and report a range.
+- **What can go wrong:** the book's young-company example, Evergreen Solar, needed new capital for eight years and came out at $0.42 to $1.31 a share against a $2.70 price in early 2009. It filed for Chapter 11 on 2011-08-15, with nothing expected for shareholders (its 8-K). One case agreeing with the method is not proof of the method.
+- **Before dividing by shares:** count options and RSUs. If the public holds lower-vote shares and a founder holds higher-vote ones, the book cites a 5 to 10% voting premium in US studies; the source is not named and was not checked, so treat the public class as worth slightly less than an equal split.
+- **Even a good valuation can lose:** the market must correct, and luck can swamp the work. Spread bets. That supports the size limits above.
+
 ## Getting shares at the offer price
 
 - An indication of interest is a non-binding, conditional offer. Most shares go to institutions and wealthy clients.
@@ -78,7 +94,7 @@ How to help a user who wants to buy a company that is going public, or any singl
 
 1. Collect the facts: `FW networth`, the steps in next-dollar.md, the prospectus numbers, and the broker and account.
 2. Run the numbers:
-   - `FW ipo --valuation <values> --revenue-q <quarter> --shares <count> --list-date <date>` (or `--price <low> <high>` with `--shares`) for per-share prices, the multiple and the dates.
+   - `FW ipo --valuation <values> --revenue-q <quarter> --shares <count> --list-date <date>` (or `--price <low> <high>` with `--shares`) for per-share prices, the multiple and the dates. Add `--net-debt <amount>` for enterprise value to revenue.
    - `FW position <amount> --symbol <ticker> --monthly-spend <amount> --price <first-day price> --below 0 10 20` for the size and a ladder.
 3. Recommend:
    - **A size.** Usually 5% of investable assets or less for one new stock, and only from money past the earlier steps.

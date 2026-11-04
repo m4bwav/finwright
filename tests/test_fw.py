@@ -584,6 +584,20 @@ ENCODING:USASCII
         self.assertEqual(fw.quarter_end(dt.date(2026, 11, 26)), dt.date(2026, 12, 31))
         self.assertEqual(fw.quarter_end(dt.date(2026, 3, 31)), dt.date(2026, 3, 31))
 
+    def test_forward_value_and_net_debt(self):
+        out = self.fw("forward-value", "--revenue", "500M", "--multiple", "2", "--years", "2", "--rate", "0.25",
+                      "--survival", "0.5", "--cash", "60M", "--debt", "10M", "--shares", "10M")
+        self.assertIn("$1.00B", out)     # 500M x 2
+        self.assertIn("$640.00M", out)   # 1000M / 1.25^2
+        self.assertIn("$320.00M", out)   # x 0.5
+        self.assertIn("$370.00M", out)   # + 60M - 10M
+        self.assertIn("$37.00", out)
+        out = self.fw("ipo", "--valuation", "100M", "--revenue", "10M", "--net-debt", "50M")
+        self.assertIn("10.0x", out)
+        self.assertIn("15.0x", out)
+        out = self.fw("ipo", "--valuation", "100M", "--revenue", "10M", "--net-debt=-20M")
+        self.assertIn("8.0x", out)
+
     def test_ipo_valuation_and_dates(self):
         out = self.fw("ipo", "--valuation", "1.2T", "--revenue-q", "10B", "--shares", "8B",
                       "--list-date", "2026-11-20", "--lockup-days", "90")

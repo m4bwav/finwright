@@ -4,6 +4,11 @@ Every change to [SKILL.md](SKILL.md) and its companions, newest first, each with
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261103-1 · 2026-11-03 · A value of your own: Damodaran's method, `forward-value`, `ipo --net-debt` (0.10.0)
+- because: pre-approved book distillation of *The Little Book of Valuation*; new-listings.md had evidence on returns but no way to form a value
+- files: references/new-listings.md (A value of your own, How to answer), scripts/fw.py (cmd_forward_value, cmd_ipo), tests/test_fw.py, plugin.json, .claude-plugin/plugin.json, evergreen.json, SKILL.md (version)
+- Adds the intrinsic and relative distinction, four checks on a multiple, the forward method and a warning from the book's own example. The 40x flag stays on market value, because Ritter's data use it.
+
 ### C-20261101-1 · 2026-11-01 · Savings bond rates for November 2026 to April 2027 (0.9.3)
 - because: fw.py check flagged the 2026-11-01 rate reset
 - files: data/rates.json (savings_bond_rates, next_change), tests/test_fw.py (test_check_flags_rates_after_change_date, test_compare_after_tax), plugin.json, .claude-plugin/plugin.json, evergreen.json, SKILL.md (version), scripts/fw.py (version)
