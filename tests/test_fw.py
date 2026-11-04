@@ -595,7 +595,7 @@ ENCODING:USASCII
         out = self.fw("ipo", "--valuation", "100M", "--revenue", "10M", "--net-debt", "50M")
         self.assertIn("10.0x", out)
         self.assertIn("15.0x", out)
-        out = self.fw("ipo", "--valuation", "100M", "--revenue", "10M", "--net-debt", "-20M")
+        out = self.fw("ipo", "--valuation", "100M", "--revenue", "10M", "--net-debt=-20M")
         self.assertIn("8.0x", out)
 
     def test_ipo_valuation_and_dates(self):

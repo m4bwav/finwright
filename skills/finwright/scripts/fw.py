@@ -1468,7 +1468,7 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--offer", help="the offer price, to show each price against it")
     s.add_argument("--list-date", help="first trading day, for the quiet period and lock-up dates")
     s.add_argument("--lockup-days", type=int, default=180)
-    s.add_argument("--net-debt", help="debt minus cash, from the prospectus (negative for net cash), to add enterprise value to revenue")
+    s.add_argument("--net-debt", help="debt minus cash, from the prospectus (net cash: --net-debt=-20M), to add enterprise value to revenue")
     s.set_defaults(fn=cmd_ipo)
     s = sub.add_parser("forward-value", help="a young company's value from revenue years out: mature multiple, discount, survival")
     s.add_argument("--revenue", required=True, help="expected revenue in the forward year: 483M")
