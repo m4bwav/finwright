@@ -22,7 +22,7 @@ import urllib.request
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation, getcontext
 from pathlib import Path
 
-VERSION = "0.9.3"
+VERSION = "0.10.0"
 getcontext().prec = 28
 CENT = Decimal("0.01")
 DISCLAIMER = ("Use at your own risk: guidance from your own records and published research, not a licensed "
@@ -954,6 +954,32 @@ def quarter_end(day: dt.date) -> dt.date:
     return dt.date(day.year + m // 12, m % 12 + 1, 1) - dt.timedelta(days=1)
 
 
+def cmd_forward_value(args) -> None:
+    """Damodaran's forward multiple for a young firm: a mature multiple on revenue years out, discounted, then survival."""
+    revenue = positive(args.revenue, "--revenue", big)
+    multiple = positive(args.multiple, "--multiple")
+    rate = positive(args.rate, "--rate")
+    survival = positive(args.survival, "--survival")
+    if survival > 1 or rate >= 1:
+        raise FwError("--survival and --rate are fractions: 0.67, 0.10")
+    if args.years < 1:
+        raise FwError("--years must be at least 1")
+    cash = big(args.cash) if args.cash else Decimal(0)
+    debt = big(args.debt) if args.debt else Decimal(0)
+    later = revenue * multiple
+    today = later / (1 + rate) ** args.years
+    adjusted = today * survival
+    equity = adjusted + cash - debt
+    print(f"Business value in year {args.years}: {short(later)} ({short(revenue)} revenue x {multiple})")
+    print(f"Today at {pct(rate)} a year: {short(today)}")
+    print(f"After a {pct(survival)} chance of surviving: {short(adjusted)}")
+    print(f"Equity (add cash {short(cash)}, take off debt {short(debt)}): {short(equity) if equity >= 0 else 'below zero'}")
+    if args.shares and equity >= 0:
+        print(f"Per share: {fmt(equity / positive(args.shares, '--shares', big))} (count options and RSUs in the shares)")
+    print("Every input is a judgment; try several. This is one estimate, not a fair price (references/new-listings.md).")
+    print(DISCLAIMER)
+
+
 def cmd_ipo(args) -> None:
     shares = positive(args.shares, "--shares", big) if args.shares else None
     if shares is not None and shares < 1:
@@ -967,6 +993,7 @@ def cmd_ipo(args) -> None:
     offer = positive(args.offer, "--offer") if args.offer else None
     if args.lockup_days < 0:
         raise FwError("--lockup-days cannot be negative")
+    net_debt = big(args.net_debt) if args.net_debt else None
     if (prices and not shares) or not (prices or values or args.list_date):
         raise FwError("pass --valuation, or --price with --shares, or --list-date")
     day = parse_date(args.list_date) if args.list_date else None
@@ -983,6 +1010,10 @@ def cmd_ipo(args) -> None:
         print("  Market value = per-share price x the share count in the prospectus (basic shares of every class; "
               "counting options and RSUs makes it larger). Pre-IPO quotes are for other share classes and splits, "
               "so they do not carry over.")
+        if revenue and net_debt is not None:
+            evs = ", ".join(f"{((cap + net_debt) / revenue).quantize(Decimal('0.1'), rounding=ROUND_HALF_UP)}x" for cap, _ in sorted(rows))
+            print(f"  Enterprise value to revenue, with net debt {short(net_debt) if net_debt >= 0 else '-' + short(-net_debt)}: {evs}. "
+                  "Compare this across companies with different debt; market value to revenue flatters the indebted.")
         if revenue and any(cap / revenue > 40 for cap, _ in rows):
             print("  Over 40 times revenue: in Ritter's data, IPOs priced there trailed the market by 58.5% over "
                   "3 years when bought at the first close (references/new-listings.md).")
@@ -1437,7 +1468,18 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--offer", help="the offer price, to show each price against it")
     s.add_argument("--list-date", help="first trading day, for the quiet period and lock-up dates")
     s.add_argument("--lockup-days", type=int, default=180)
+    s.add_argument("--net-debt", help="debt minus cash, from the prospectus (negative for net cash), to add enterprise value to revenue")
     s.set_defaults(fn=cmd_ipo)
+    s = sub.add_parser("forward-value", help="a young company's value from revenue years out: mature multiple, discount, survival")
+    s.add_argument("--revenue", required=True, help="expected revenue in the forward year: 483M")
+    s.add_argument("--multiple", required=True, help="enterprise value to revenue of mature peers today: 1.55")
+    s.add_argument("--years", type=int, default=5)
+    s.add_argument("--rate", required=True, help="yearly discount rate: 0.10")
+    s.add_argument("--survival", default="1", help="chance it survives to that year: 0.67")
+    s.add_argument("--cash", help="cash today")
+    s.add_argument("--debt", help="debt today")
+    s.add_argument("--shares", help="share count, for a per-share value")
+    s.set_defaults(fn=cmd_forward_value)
     s = sub.add_parser("position", help="what a single-stock buy would be against the records: concentration, "
                        "emergency fund, a ladder of limit orders")
     s.add_argument("amount")
