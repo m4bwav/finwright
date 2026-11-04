@@ -560,6 +560,17 @@ ENCODING:USASCII
                              "--balance", "100000")[0], 2)  # payment below the interest
         self.assertEqual(run("--data", self.d, "mortgage", "--rate", "6", "--balance", "100")[0], 2)
 
+    def test_placement_reproduces_published_tables(self):
+        base = ["placement", "50000", "--years", "30", "--stock-return", "0.10", "--dividend", "0.015",
+                "--bond-return", "0.07", "--cap-gains", "0.15", "--income", "0.25"]
+        out = self.fw(*base)
+        self.assertRegex(out, r"Stocks taxable, bonds sheltered\s+\$1,005,45\d")
+        self.assertRegex(out, r"Bonds taxable, stocks sheltered\s+\$886,43\d")
+        self.assertIn("for stocks in the taxable account", out)
+        roth = self.fw(*base, "--shelter", "roth")
+        self.assertIn("for bonds in the taxable account", roth)  # a tax-free account favours the higher return here
+        self.assertEqual(run("--data", self.d, "placement", "100")[0], 2)
+
     def test_compare_after_tax(self):
         out = self.fw("compare", "10000", "--years", "1", "--option", "Savings=4:full",
                       "--option", "Pay loan=3.875:none", "--option", "ibond", "--option", "Bills=4:federal",

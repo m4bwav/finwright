@@ -57,7 +57,7 @@ None of the flowcharts puts I bonds or mortgage prepayment ahead of tax-advantag
 
 ## Investing
 
-- Tax-advantaged room first (match, HSA, IRA, 401(k)), then taxable. Over long periods stocks are expected to beat a low mortgage rate, but they promise nothing, so `compare` leaves them out. That is a separate decision about risk and time horizon. Recommend the kind of fund (a broad, low-cost index fund fits most people) and the account it goes in; a single stock is a separate, smaller bet ([new-listings.md](new-listings.md)).
+- Tax-advantaged room first (match, HSA, IRA, 401(k)), then taxable. Over long periods stocks are expected to beat a low mortgage rate, but they promise nothing, so `compare` leaves them out. That is a separate decision about risk and time horizon. Recommend the kind of fund (a broad, low-cost index fund fits most people) and the account it goes in; a single stock is a separate, smaller bet ([new-listings.md](new-listings.md)). Which account should hold which fund, and a large one-off sum: [portfolio-care.md](portfolio-care.md).
 
 ## How to answer
 
