@@ -22,7 +22,7 @@ import urllib.request
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation, getcontext
 from pathlib import Path
 
-VERSION = "0.10.0"
+VERSION = "0.11.0"
 getcontext().prec = 28
 CENT = Decimal("0.01")
 DISCLAIMER = ("Use at your own risk: guidance from your own records and published research, not a licensed "
@@ -893,6 +893,38 @@ def compare_option(spec: str, rates: dict) -> tuple[str, Decimal, str]:
     return name, money(rate), kind
 
 
+def placement_stock_taxable(amount, years, growth, dividend, cap_gains):
+    """Value and tax due at sale of a stock fund in a taxable account: dividends taxed yearly and added to basis."""
+    value, basis = amount, amount
+    for _ in range(years):
+        net_dividend = value * dividend * (1 - cap_gains)
+        value = value * (1 + growth - dividend * cap_gains)
+        basis += net_dividend
+    return value, (value - basis) * cap_gains
+
+
+def cmd_placement(args) -> None:
+    amount, years = money(args.amount), args.years
+    growth, dividend, bond = money(args.stock_return), money(args.dividend), money(args.bond_return)
+    cap_gains, income = money(args.cap_gains), money(args.income)
+    shelter_tax = Decimal(0) if args.shelter == "roth" else income
+    stock_taxable, stock_tax = placement_stock_taxable(amount, years, growth, dividend, cap_gains)
+    bond_sheltered = amount * (1 + bond) ** years
+    bond_taxable = amount * (1 + bond * (1 - income)) ** years
+    stock_sheltered = amount * (1 + growth) ** years
+    a = stock_taxable - stock_tax + bond_sheltered * (1 - shelter_tax)
+    b = bond_taxable + stock_sheltered * (1 - shelter_tax)
+    print(f"{fmt(amount)} in stocks and {fmt(amount)} in bonds for {years} years; {args.shelter} shelter; "
+          f"stocks {pct(growth)} ({pct(dividend)} dividend), bonds {pct(bond)}, "
+          f"capital gains {pct(cap_gains)}, income {pct(income)}. After tax:")
+    print(f"  Stocks taxable, bonds sheltered{fmt(a):>18}")
+    print(f"  Bonds taxable, stocks sheltered{fmt(b):>18}")
+    print(f"  Difference{fmt(abs(a - b)):>39}, for {'stocks' if a >= b else 'bonds'} in the taxable account")
+    print("  Returns and tax rates are assumptions, so try more than one set. The two results end with different "
+          "stock and bond mixes, so a higher total can also mean more risk. Trading and state tax are left out.")
+    print(DISCLAIMER)
+
+
 def cmd_compare(args) -> None:
     cfg = load_config(data_dir(args))
     fed = money(args.federal) if args.federal else money(cfg["after_tax_rate"])
@@ -1449,6 +1481,17 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--lump", help="a one-time prepayment now")
     s.add_argument("--as-of")
     s.set_defaults(fn=cmd_mortgage)
+    s = sub.add_parser("placement", help="after-tax result of holding stocks or bonds in the taxable account")
+    s.add_argument("amount", help="dollars on each side")
+    s.add_argument("--years", type=int, required=True)
+    s.add_argument("--stock-return", required=True, help="yearly, with dividends, e.g. 0.07")
+    s.add_argument("--dividend", required=True, help="yearly dividend yield, e.g. 0.015")
+    s.add_argument("--bond-return", required=True, help="yearly, e.g. 0.04")
+    s.add_argument("--cap-gains", required=True, help="tax rate on dividends and gains, e.g. 0.15")
+    s.add_argument("--income", required=True, help="tax rate on bond interest and deferred withdrawals, e.g. 0.22")
+    s.add_argument("--shelter", choices=("deferred", "roth"), default="deferred")
+    s.set_defaults(fn=cmd_placement)
+
     s = sub.add_parser("compare", help="after-tax yield of places a sum could go (savings, Treasuries, I bonds, "
                        "paying down a loan)")
     s.add_argument("amount")

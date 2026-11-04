@@ -4,6 +4,11 @@ Every change to [SKILL.md](SKILL.md) and its companions, newest first, each with
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261103-2 · 2026-11-03 · Portfolio care: placement, tax-loss sales, rebalancing moves, windfalls, withdrawals; `placement` (0.11.0)
+- because: pre-approved book distillation of *The Bogleheads' Guide to Investing* (2nd ed., 2014); the skill flagged drift and fees but said nothing on what to do next
+- files: references/portfolio-care.md (new), references/next-dollar.md (Investing), SKILL.md, RESEARCH.md, scripts/fw.py (cmd_placement), tests/test_fw.py, version files
+- Book claims were checked before use: wash sale, withdrawal rate and the 93.6% allocation figure are corrected in the reference. fw.py stays yellow on the size budget (about 1,570 lines).
+
 ### C-20261103-1 · 2026-11-03 · A value of your own: Damodaran's method, `forward-value`, `ipo --net-debt` (0.10.0)
 - because: pre-approved book distillation of *The Little Book of Valuation*; new-listings.md had evidence on returns but no way to form a value
 - files: references/new-listings.md (A value of your own, How to answer), scripts/fw.py (cmd_forward_value, cmd_ipo), tests/test_fw.py, plugin.json, .claude-plugin/plugin.json, evergreen.json, SKILL.md (version)
