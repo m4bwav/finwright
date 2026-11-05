@@ -4,6 +4,11 @@ Every change to [SKILL.md](SKILL.md) and its companions, newest first, each with
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261105-1 · 2026-11-05 · Reading a company's statements before valuing it (0.11.1)
+- because: pre-approved book distillation of *Accounting: What the Numbers Mean* (Marshall, McManus, Viele, 10th ed., 2014): the single-stock guide valued a company but never said how to read its statements.
+- files: references/new-listings.md (Reading the statements)
+- Added the checks: trends over single ratios, revenue policy, profit against operating cash, early warnings, funding gaps, flattered cash flow, non-GAAP reconciliations, diluted EPS and debt. Figures checked outside the book: COSO's 61% of 347 cases; the 2022 SEC staff guidance; ASU 2015-01. No ratio rules of thumb, by the book's own warning that they are not empirical.
+
 ### C-20261104-1 · 2026-11-04 · Say what `redact` leaves in
 - because: pre-approved book distillation of *Privacy and Security for Large Language Models* (Lin, 2026): masked text needs a reidentification check.
 - files: SKILL.md (redacting a file)

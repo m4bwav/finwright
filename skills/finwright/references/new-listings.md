@@ -54,6 +54,20 @@ Source: Damodaran, *The Little Book of Valuation* (Wiley 2011; updated 2024), ch
 - **Before dividing by shares:** count options and RSUs. If the public holds lower-vote shares and a founder holds higher-vote ones, the book cites a 5 to 10% voting premium in US studies; the source is not named and was not checked, so treat the public class as worth slightly less than an equal split.
 - **Even a good valuation can lose:** the market must correct, and luck can swamp the work. Spread bets. That supports the size limits above.
 
+## Reading the statements
+
+Source: Marshall, McManus and Viele, *Accounting: What the Numbers Mean* (10th ed., McGraw-Hill 2014), ch. 9, 10, 11. It predates current rules (see the last bullet). The S-1 gives several years of statements; read these before trusting a multiple.
+
+- **Use trends, not one year.** A single ratio says little, and comparing companies is unreliable when accounting methods differ. Compare each company's direction with its peers' direction. The book says its own ratio rules of thumb are not empirical, so do not quote them as pass marks.
+- **Revenue first.** Revenue is where misstatement starts: 61% of the 347 US fraud cases in COSO's 1998-2007 study used improper revenue recognition. Those are alleged SEC cases, not a rate for all companies. Read the revenue policy note. Ask whether revenue is booked too soon, and whether a reseller reports the full price or only its margin.
+- **Profit against operating cash flow.** Operating cash flow should be positive. A startup can be negative; in a mature company that is a warning. Profit rising while operating cash falls can mean receivables or inventory are growing faster than sales, which the current ratio can hide.
+- **Early warnings:** days of sales in receivables rising, inventory rising against sales, plant and equipment turnover falling.
+- **Who pays for growth.** If investing outflows beat operating cash year after year and financing fills the gap, ask how long that funding can last. For a new listing, say how much of the offering's proceeds goes to that gap, using the prospectus's use of proceeds.
+- **Cash flow can be flattered too** (the book's exhibit from Schilit and Perler, *Financial Shenanigans*): paying vendors more slowly, selling receivables early, buying less inventory, and booking normal costs as investing. One good year of operating cash proves little.
+- **Non-GAAP numbers.** Find the reconciliation table to the nearest GAAP figure and read each adjustment. Recurring restructuring is a warning, and companies differ on whether it sits above operating income. SEC staff guidance (C&DI 100.04, updated December 2022) treats adjustments that change GAAP recognition or measurement as potentially misleading.
+- **Per share and debt.** Use diluted, not basic, earnings per share for a P/E. Debt magnifies returns both ways: it helps only while the return on assets beats the cost of debt. Check interest cover (operating income over interest expense).
+- **Dated in this edition:** ASC 606 replaced its revenue rules, ASU 2015-01 removed extraordinary items, and later standards changed leases. Use the book for the questions and the filing's own notes for the rules.
+
 ## Getting shares at the offer price
 
 - An indication of interest is a non-binding, conditional offer. Most shares go to institutions and wealthy clients.
