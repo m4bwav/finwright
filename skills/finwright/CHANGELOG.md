@@ -4,6 +4,11 @@ Every change to [SKILL.md](SKILL.md) and its companions, newest first, each with
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261104-1 · 2026-11-04 · Say what `redact` leaves in
+- because: pre-approved book distillation of *Privacy and Security for Large Language Models* (Lin, 2026): masked text needs a reidentification check.
+- files: SKILL.md (redacting a file)
+- No code change. The line now names what is masked, as REDACTIONS in fw.py defines it, and what is not.
+
 ### C-20261103-2 · 2026-11-03 · Portfolio care: placement, tax-loss sales, rebalancing moves, windfalls, withdrawals; `placement` (0.11.0)
 - because: pre-approved book distillation of *The Bogleheads' Guide to Investing* (2nd ed., 2014); the skill flagged drift and fees but said nothing on what to do next
 - files: references/portfolio-care.md (new), references/next-dollar.md (Investing), SKILL.md, RESEARCH.md, scripts/fw.py (cmd_placement), tests/test_fw.py, version files

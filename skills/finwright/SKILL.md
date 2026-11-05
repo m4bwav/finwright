@@ -55,7 +55,7 @@ Monthly is the usual cadence. The same day each month keeps the history comparab
 - **Which account holds what, tax-loss sales, rebalancing moves, a windfall, retirement withdrawals:** [references/portfolio-care.md](references/portfolio-care.md); `FW placement` compares the two ways to hold stocks and bonds.
 - **A new listing (IPO) or any single stock:** follow [references/new-listings.md](references/new-listings.md): how retail investors get IPO shares, the first day, the pop and the fade, lock-ups, and why pre-IPO quotes do not carry over. `FW ipo --valuation 1.5T 2T --revenue-q 16.8B --shares <count> --list-date <date>` turns a company value or a prospectus price range into per-share prices, revenue multiples and the dates after listing (analysts, first quarter end, lock-up). `FW position <amount> --symbol <ticker> --monthly-spend <amount> --price <ref> --below 0 10 20` shows the buy against investable assets (concentration bands), the emergency fund after it, and a ladder of limit orders. Recommend a size and an entry plan; the user places the orders.
 - **A summary to share or paste somewhere less trusted:** `FW networth --percent-only` gives shares of assets with no dollar amounts and no account names.
-- **Redacting a file before reading it:** `FW redact <file> --out <file>.redacted.txt` masks account numbers and SSNs.
+- **Redacting a file before reading it:** `FW redact <file> --out <file>.redacted.txt` masks account numbers, SSNs and birth dates. Names, addresses and amounts stay, so read the copy for what still identifies the user before it goes anywhere hosted.
 
 ## References
 
