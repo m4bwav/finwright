@@ -4,6 +4,10 @@ Every change to [SKILL.md](SKILL.md) and its companions, newest first, each with
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261113-1 · 2026-11-13 · Bogleheads' Guide follow-ups: step zero, fund months, I bonds vs TIPS, holdings warnings, sale questions (0.11.3)
+because: user request (book distillation, *The Bogleheads' Guide to Investing*, 2nd ed., 2014); book rules, unverified by any fw.py check
+files: references/next-dollar.md (Step zero, Ask these, I bonds), references/portfolio-care.md (Reviewing holdings, Before a sale or a switch, Claims not to repeat), SKILL.md (step 4), version files. No dated book figures; the deductibility claim corrected from IRS Publication 936. Not built: a savings-rate target command and an insurance and estate checklist (scope call for the maintainer).
+
 ### C-20261105-2 · 2026-11-05 · Self-employed and side income reference
 because: user request (book distillation, Lasser's Small Business Taxes 2024)
 files: references/self-employed.md, SKILL.md (routing). Hobby or business, set-asides and plans, with the book's dated rules corrected from later sources.

@@ -56,9 +56,26 @@ An inheritance, a sale or a settlement (ch. 15):
 - **Flexibility is the main protection:** low fixed costs, a way to earn if needed, and spending that can fall in a bad year (ch. 20). Social Security pays more when it starts later, and an immediate annuity can cover basic costs; both are worth raising, and neither is a decision for this skill.
 - **Longevity:** plan past life expectancy, since half of retirees outlive it. The book also warns against underspending in old age out of fear (ch. 20).
 
+## Reviewing holdings
+
+- **Concentration:** warn when employer stock is more than about 10% of the portfolio (Bogleheads' Guide, ch. 19; FINRA cites the same cap for any one stock). The paycheck already rides on that company.
+- **Overlap:** several funds holding the same large companies (an S&P 500 fund, a total market fund and a large-cap growth fund) are one bet, not diversification (ch. 12).
+- **Fees beyond the expense ratio:** `FW fees` weighs expense ratios only. Ask whether any fund charges a sales load or a 12b-1 fee, and whether an adviser or wrap account takes a percentage on top (ch. 9).
+
+## Before a sale or a switch
+
+Ask these before endorsing a sell, a fund switch or a new strategy (ch. 19):
+
+1. Is this a reaction to recent news or a recent drop or run-up?
+2. Would you buy this today at this price if you did not own it?
+3. Does it change the allocation you set, and was that plan wrong or just uncomfortable?
+4. What does the move cost in tax, loads and spreads?
+5. Are you trusting a forecast, a tip or past returns?
+
 ## Claims not to repeat
 
 - The book says allocation decides 93.6% of a portfolio's risk and return (ch. 8). Brinson, Hood and Beebower measured variation in returns over time. Ibbotson and Kaplan (2000) found about 90% over time, about 40% of the differences between funds and about 100% of the return level, and critics dispute how the last is framed.
+- Using a home-equity loan to pay off credit cards (ch. 1) turns unsecured debt into debt against the house, and spending often refills the cards. Since 2018, home-equity interest is deductible only when the loan buys, builds or substantially improves the home (IRS Publication 936), so the book's tax point no longer holds for card payoffs.
 - Bonds equal to one's age and the book's model portfolios are rough guides from 2014. They are starting points to discuss, not targets to set for the user.
 
 ## Sources

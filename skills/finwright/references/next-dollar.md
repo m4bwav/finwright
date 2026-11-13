@@ -4,10 +4,14 @@ How to help the user decide where spare money goes: paying down the mortgage, I 
 
 fw.py does the arithmetic: `mortgage` for the payoff month and what a lump sum saves, and `compare` for the after-tax yields of the choices. The model recommends with reasons, and the user decides (hard rule 6).
 
+## Step zero
+
+Before any of the order below, three things should be true: the user knows their net worth (run the check in SKILL.md first), carries no card balance from month to month, and has an emergency fund. The Bogleheads' Guide to Investing (ch. 1) puts these ahead of investing; where one is missing, that is the answer.
+
 ## Ask these before answering
 
 1. **What is the money already sitting there earning?** Run `FW networth`, then look at the interest lines on the cash accounts (a bank activity import shows them). Large balances at a big bank's savings or money market rate (often 0.01% to 0.1%, while the national average was 0.37% and the best savings accounts and Treasury bills paid about 4% to 4.5% in October 2026) usually cost more each year than anything the next $10,000 can change. Say so first.
-2. **Emergency fund:** months of spending held in cash. The usual range is 3 to 6 months. Hold more with one income, variable pay or a shaky job, and less with two stable incomes. The Bogleheads wiki says to start at one month and grow toward 3 to 12.
+2. **Emergency fund:** months of spending held in cash. The usual range is 3 to 6 months. Hold more with one income, variable pay or a shaky job, and less with two stable incomes. The Bogleheads wiki says to start at one month and grow toward 3 to 12. The Bogleheads' Guide to Investing (ch. 1) scales it by job security: about 3 months for a very stable job, 6 for most, up to 12 for the self-employed or anyone in a field prone to layoffs.
 3. **Employer match:** is the user getting all of it? Vanguard (2026) found 26% of people prepaying a mortgage were leaving match money on the table.
 4. **Other debt:** cards, car loans, student loans and their rates.
 5. **Tax-advantaged room this year:** HSA, IRA or Roth IRA (for each spouse), and room left in the 401(k) (`FW limits`). Contributions to a Roth IRA (not its earnings) can be taken back out at any time, so funding one gives up less access than paying down a loan.
@@ -44,7 +48,7 @@ None of the flowcharts puts I bonds or mortgage prepayment ahead of tax-advantag
 - **The fixed rate is what lasts.** The composite rate is the fixed rate plus inflation, reset every 6 months. A bond keeps the fixed rate of its purchase month for 30 years. New rates are announced on 1 May and 1 November (`FW bond rates`; the next date is in rates.json).
 - **Timing:** buying at the end of a period locks the current rate for 6 months. That pays off only when the next fixed rate is expected to be the same or lower. When forecasters expect it to rise (Tipswatch publishes the inflation part, which is already fixed by the CPI, and a fixed-rate estimate before each reset), wait for the new period. Interest counts for the whole month of purchase, so buying late in a month costs nothing.
 - **Two calendar years, one rate:** a household that has not used this year's limit can buy in November or December and again in January, both at the same November fixed rate.
-- **I bonds or TIPS:** when the 5-year TIPS real yield sits far above the I bond fixed rate, the forums prefer TIPS (Tipswatch, 2026: "advantage TIPS"). TIPS fit best inside an IRA, because outside one their inflation adjustment is taxed every year.
+- **I bonds or TIPS:** when the 5-year TIPS real yield sits far above the I bond fixed rate, the forums prefer TIPS (Tipswatch, 2026: "advantage TIPS"). TIPS fit best inside an IRA, because outside one their inflation adjustment is taxed every year. Weigh these (Bogleheads' Guide, ch. 5): the gap between the two real rates on the day; the user's bracket and whether the money is taxable; how long it will be held (I bonds lock up for a year and charge interest before five, while TIPS held to maturity pay par but can be sold at a loss before); state tax (neither is taxed by states); and buying TIPS at auction or as a fund, whose price moves with rates. After their first year, I bonds can be cashed at full value less any penalty, which TIPS cannot promise.
 - **Role:** after their first 12 months, I bonds work as a second layer of the emergency fund. They are never the first layer (White Coat Investor, Tipswatch).
 - **Old bonds:** a bond with a 0% fixed rate earns only inflation. Whether to cash it and buy at a higher fixed rate depends on the deferred tax that comes due on redemption and the 3-month penalty before 5 years. `FW bond value` shows each bond's value.
 
