@@ -162,5 +162,29 @@ class GuardTest(unittest.TestCase):
         self.assertEqual((code, out), (0, None))
 
 
+
+@unittest.skipUnless(__import__("shutil").which("sh"), "needs sh")
+class LauncherTest(unittest.TestCase):
+    """fw_guard.sh runs the guard with one Python start and keeps its decisions."""
+    def run_sh(self, mode, event):
+        with tempfile.TemporaryDirectory() as tmp:
+            env = dict(os.environ, FINWRIGHT_GUARD_STATE=tmp)
+            return subprocess.run(["sh", str(GUARD.with_suffix(".sh")), mode], input=json.dumps(event),
+                                  capture_output=True, text=True, env=env, timeout=30)
+
+    def test_denies_money_call(self):
+        p = self.run_sh("pretool", {"hook_event_name": "PreToolUse", "tool_name": "mcp__robinhood__place_order",
+                                    "tool_input": {"symbol": "X"}, "permission_mode": "default"})
+        self.assertEqual(json.loads(p.stdout)["hookSpecificOutput"]["permissionDecision"], "deny", p.stderr)
+
+    def test_passes_plain_call(self):
+        p = self.run_sh("pretool", {"hook_event_name": "PreToolUse", "tool_name": "Bash",
+                                    "tool_input": {"command": "ls"}, "permission_mode": "default"})
+        self.assertEqual((p.returncode, p.stdout.strip()), (0, ""), p.stderr)
+
+    def test_prompt_path_exits_zero(self):
+        p = self.run_sh("prompt", {"hook_event_name": "UserPromptSubmit", "prompt": "hi"})
+        self.assertEqual(p.returncode, 0, p.stderr)
+
 if __name__ == "__main__":
     unittest.main(verbosity=1)
