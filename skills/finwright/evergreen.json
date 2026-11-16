@@ -13,9 +13,9 @@
   "source": null,
   "topic": "Personal net worth tracking for US individuals with an AI agent: bank, 401k, IRA, savings bond (I/EE via Treasury value files), brokerage and liability records; IRS contribution limits; I/EE bond rates; SCF benchmarks; aggregators (SimpleFIN, Plaid, Teller, IBKR Flex, Schwab Trader API); personal-finance MCP servers and AI features (Monarch, Robinhood, Copilot, ChatGPT, Perplexity, Claude Money); security of AI with banking data",
   "tier": "moderate",
-  "interval_days": 30,
-  "last_checked": "2026-10-12",
-  "next_due": "2026-11-11",
+  "interval_days": 30.0,
+  "last_checked": "2026-11-15",
+  "next_due": "2026-12-15",
   "verify_at_use": false,
   "volatile_claims": [
     "2026 IRS limits in data/rates.json (401k 24,500; IRA 7,500; HSA 4,400/8,750); 2027 limits due about Nov 2026",
@@ -29,11 +29,6 @@
   ],
   "contradiction": null,
   "events": [
-    {
-      "date": "2026-11-01",
-      "settle_days": 3,
-      "note": "New I and EE bond rates for Nov 2026 to Apr 2027 issues; add to data/rates.json savings_bond_rates"
-    },
     {
       "date": "2026-11-15",
       "settle_days": 14,
@@ -69,12 +64,18 @@
       "m": 0.4,
       "interval_after": 30,
       "note": "new-listings research (R-20261017-1); ipo and position commands; recommend-with-reasons mission (C-20261017-1)"
+    },
+    {
+      "date": "2026-11-15",
+      "m": 0.1,
+      "interval_after": 30.0,
+      "note": "quiet: Nov I/EE rates already in rates.json; IRS 2027 limits not yet out; cost: searches 2 · fetches 0 · tool calls 3"
     }
   ],
   "counts": {
     "learnings": 0,
     "changes": 0,
-    "research": 0,
+    "research": 1,
     "tests": 0
   },
   "consolidate_every": 25,
