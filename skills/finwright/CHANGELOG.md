@@ -4,6 +4,10 @@ Every change to [SKILL.md](SKILL.md) and its companions, newest first, each with
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261117-2 · 2026-11-17 · Goals with a seeded Monte Carlo check; essential goals in safe assets; risk in the user's dollars (0.12.0)
+because: user request (book distillation, *FinTech Innovation* by Paolo Sironi, 2016, ch. 6 and 7.4); class rules and the 70% and five-year flags are book rules or our numbers, unverified by any outside check
+files: scripts/fw_goals.py (new: goal add, list, check), scripts/fw.py (parser hook), tests/test_fw.py (three goal tests), references/next-dollar.md (Goals and risk), SKILL.md (Other jobs), AGENTS.md, version files. The check states its return and volatility assumptions (ours, real, overridable with --assume). Not built: the book's industry chapters, scenario optimisation and tax-loss content (already covered in portfolio-care.md).
+
 ### C-20261117-1 · 2026-11-17 · Decision habits from two books: premortem, luck or skill, behaviour questions, alternative named (0.11.5)
 because: user request (book distillation, *Thinking in Bets* by Annie Duke and *The Psychology of Money* by Morgan Housel); book rules, unverified by any fw.py check
 files: references/portfolio-care.md (Selling at a loss, Before a sale or a switch, Before a large move), references/new-listings.md (first-day ladder, young-company range), references/next-dollar.md (How to answer), references/rules.md (rule 15), version files. Not built: a decision-log note type and an fw.py stress line (recorded as ideas only; no code change).

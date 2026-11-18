@@ -535,6 +535,57 @@ ENCODING:USASCII
         (Path(self.d) / "hunt.csv").unlink()
         self.assertIn("no searches yet", self.fw("hunt", "list"))
 
+    # ---- goals ----
+    def goal_setup(self):
+        self.fw("account", "add", "sav", "--type", "cash")
+        self.fw("account", "add", "brk", "--type", "taxable")
+        self.fw("balance", "set", "sav", "23456", "--as-of", "2026-10-01")
+        self.fw("balance", "set", "brk", "50000", "--as-of", "2026-10-01")
+        self.fw("holding", "set", "brk", "VTI", "50000", "--asset-class", "us_stock", "--as-of", "2026-10-01")
+
+    def test_goal_add_list_and_errors(self):
+        self.assertIn("no goals yet", self.fw("goal", "list"))
+        self.goal_setup()
+        self.fw("goal", "add", "fund", "--target", "17321", "--by", "2027-10-12", "--class", "essential",
+                "--accounts", "sav:0.5")
+        out = self.fw("goal", "list")
+        self.assertIn("$11,728.00", out)   # funded: half of savings
+        self.assertIn("$5,593.00", out)    # gap
+        self.assertIn("$466.08", out)      # the gap over 12 months
+        for bad in (["fund", "--target", "1", "--by", "2027-01-01", "--class", "essential"],
+                    ["x", "--target", "1", "--by", "2027-01-01", "--class", "essential", "--accounts", "nope"],
+                    ["y", "--target", "1", "--by", "2027-01-01", "--class", "essential", "--accounts", "sav:1.5"],
+                    ["z", "--target", "1", "--by", "2027-01-01", "--earliest", "2028-01-01", "--class", "important"]):
+            self.assertEqual(run("--data", self.d, "goal", "add", *bad)[0], 2, bad)
+
+    def test_goal_check_is_seeded_flags_and_states_assumptions(self):
+        self.goal_setup()
+        self.fw("goal", "add", "met", "--target", "5000", "--by", "2027-10-12", "--class", "essential",
+                "--accounts", "sav:0.5")
+        self.fw("goal", "add", "risky", "--target", "60000", "--by", "2028-10-12", "--class", "essential",
+                "--accounts", "brk")
+        self.fw("goal", "add", "moon", "--target", "10000000", "--by", "2030-10-12", "--class", "aspirational",
+                "--accounts", "brk")
+        out = self.fw("goal", "check", "--paths", "500")
+        self.assertEqual(out, self.fw("goal", "check", "--paths", "500"))  # same seed, same answer
+        self.assertRegex(out, r"met\s+essential\s+100%")
+        self.assertRegex(out, r"moon\s+aspirational\s+0%")
+        self.assertIn("held mostly in stocks", out)
+        self.assertIn("brk is promised 200%", out)
+        self.assertIn("us_stock     5.0% / 16.0%", out)
+        self.assertIn("us_stock     7.0% / 16.0%", self.fw("goal", "check", "--paths", "50",
+                                                          "--assume", "us_stock=0.07:0.16"))
+        self.assertEqual(run("--data", self.d, "goal", "check", "--assume", "gold=1")[0], 2)
+
+    def test_goal_simulate_window_and_drift(self):
+        import fw_goals
+        flat = {"cash": (0.0, 0.0)}
+        # no growth, 100 a month: 1,000 reached at month 10, inside a 6-12 window, not inside 0-5
+        self.assertEqual(fw_goals.simulate(0, 100, {"cash": 1.0}, flat, 6, 12, 1000, 10, 1), 1.0)
+        self.assertEqual(fw_goals.simulate(0, 100, {"cash": 1.0}, flat, 0, 5, 1000, 10, 1), 0.0)
+        p = fw_goals.simulate(1000, 0, {"us_stock": 1.0}, fw_goals.ASSUME, 120, 120, 1000, 2000, 3)
+        self.assertTrue(0.6 < p < 0.95, p)  # positive real drift: more likely up than down after ten years
+
 
     # ---- where a sum goes ----
     def test_level_payment_and_amortize(self):
