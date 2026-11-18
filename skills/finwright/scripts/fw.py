@@ -22,7 +22,7 @@ import urllib.request
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation, getcontext
 from pathlib import Path
 
-VERSION = "0.11.5"
+VERSION = "0.12.0"
 getcontext().prec = 28
 CENT = Decimal("0.01")
 DISCLAIMER = ("Use at your own risk: guidance from your own records and published research, not a licensed "
@@ -1285,6 +1285,7 @@ def build_parser() -> argparse.ArgumentParser:
         sys.path.insert(0, here)
     import fw_import as fwi  # the importers, loaded here so `import fw` stays acyclic
     import fw_mail as fwm
+    import fw_goals
     p = argparse.ArgumentParser(prog="fw.py", description=__doc__.split("\n")[0])
     p.add_argument("--data", help="data folder (default $FINWRIGHT_DATA or ~/finwright-data)")
     p.add_argument("--version", action="version", version=f"finwright {VERSION}")
@@ -1452,6 +1453,7 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--note")
     s.set_defaults(fn=cmd_hunt_update)
     hu.add_parser("list").set_defaults(fn=cmd_hunt_list)
+    fw_goals.add_parsers(sub)
     ma = sub.add_parser("mail", help="find retirement-account mentions in exported mail (mbox, eml, jsonl)"
                         ).add_subparsers(dest="sub", required=True)
     s = ma.add_parser("scan")
