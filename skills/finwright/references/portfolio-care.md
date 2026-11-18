@@ -17,6 +17,7 @@ What to do once `FW allocation` and `FW fees` show the picture: which account ho
 - **The wash sale window is 61 days:** 30 days before the sale, the sale day and 30 days after. The book mentions only waiting afterwards (ch. 10), so also check purchases made before the sale. A similar but not identical fund can keep the money invested.
 - **An IRA purchase counts.** Buying the same fund in the user's IRA within the window disallows the loss (Rev. Rul. 2008-5), and secondary sources say it is lost for good rather than added to basis. A spouse's purchase can count too. Have the user confirm these points with Publication 550 or a tax professional before acting.
 - Loss sales only help in a taxable account. Do not quote the book's 27% harvesting gain: its simulation was not checked and depends on its assumptions.
+- **One losing holding is not a trigger.** A fund down while the rest of the plan holds is what diversification looks like; sell for tax, allocation or a changed plan, not for the red number alone (book rule, unverified; *The Psychology of Money*, ch. 6).
 
 ## Timing a taxable sale
 
@@ -71,6 +72,17 @@ Ask these before endorsing a sell, a fund switch or a new strategy (ch. 19):
 3. Does it change the allocation you set, and was that plan wrong or just uncomfortable?
 4. What does the move cost in tax, loads and spreads?
 5. Are you trusting a forecast, a tip or past returns?
+6. When judging a past result: how much was the decision and how much was luck? A good year does not prove the choice, nor a bad one disprove it (book rule, unverified; *Thinking in Bets*, ch. 3).
+
+## Before a large move
+
+For a rebalance, a lump-sum purchase, paying off the mortgage or an IPO buy, run a short premortem with the user before recommending (book rule, unverified; *Thinking in Bets*, ch. 6):
+
+1. Picture it a year later as a failure, and write that headline in one line.
+2. Name three likely causes.
+3. Agree one rule now that guards against the likeliest (a limit, a stop date, a cash floor), and write it down.
+
+Before an allocation recommendation, also ask how the user behaves, not only what they own (book rule, unverified; *The Psychology of Money*, ch. 10, 13, 15): what share of income they save, how large a fall they have sat through without selling, how many months of income gap they could cover, and which single job, person or account the plan leans on.
 
 ## Claims not to repeat
 

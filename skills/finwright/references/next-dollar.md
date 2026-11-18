@@ -67,5 +67,5 @@ None of the flowcharts puts I bonds or mortgage prepayment ahead of tax-advantag
 
 1. Collect the facts above (`FW networth`, `FW limits`, `FW bond rates`, the user's answers).
 2. Run `FW mortgage --rate R --payment PI --lump AMOUNT` (or `--original` and `--term` to work out the payment) and `FW compare AMOUNT --years N --option ...` with today's rates, which the user can confirm on their bank's and Treasury's pages. Name each rate's source and date.
-3. Answer in the order above: fix the idle cash first, then the earliest step the user has not finished. For a low-rate loan, explain the after-tax comparison, the cash flow point and the lump-sum middle path. Recommend one, with the trade-off in their own numbers and what would change the answer; the user decides.
+3. Answer in the order above: fix the idle cash first, then the earliest step the user has not finished. For a low-rate loan, explain the after-tax comparison, the cash flow point and the lump-sum middle path. Recommend one, with the trade-off in their own numbers and what would change the answer; the user decides. Before a large move or an allocation, run the premortem and behaviour questions in [portfolio-care.md](portfolio-care.md#before-a-large-move).
 4. End with fw.py's disclaimer line.
