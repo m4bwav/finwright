@@ -4,6 +4,10 @@ Every change to [SKILL.md](SKILL.md) and its companions, newest first, each with
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261117-1 · 2026-11-17 · Decision habits from two books: premortem, luck or skill, behaviour questions, alternative named (0.11.5)
+because: user request (book distillation, *Thinking in Bets* by Annie Duke and *The Psychology of Money* by Morgan Housel); book rules, unverified by any fw.py check
+files: references/portfolio-care.md (Selling at a loss, Before a sale or a switch, Before a large move), references/new-listings.md (first-day ladder, young-company range), references/next-dollar.md (How to answer), references/rules.md (rule 15), version files. Not built: a decision-log note type and an fw.py stress line (recorded as ideas only; no code change).
+
 ### C-20261113-2 · 2026-11-13 · Optional insurance and estate checklist (0.11.4)
 because: user request (maintainer ruled "add it as optional" on the scope call left open in C-20261113-1; *The Bogleheads' Guide to Investing*, ch. 21-22)
 files: references/protection.md (new), SKILL.md (Other jobs, References), version files. Questions only, opt-in, routed to professionals; no dated book figures and no fw.py change.

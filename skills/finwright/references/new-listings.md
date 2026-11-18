@@ -37,6 +37,7 @@ How to help a user who wants to buy a company that is going public, or any singl
   - A lump sum beats spreading the buy over 12 months about two-thirds of the time for a diversified portfolio (Vanguard 2012, 2023).
   - For one new stock, whose median path after the pop is down, a ladder of limit orders below the first-day price is a reasonable way to limit regret and timing risk.
   - Say plainly that this is the reason for the ladder.
+  - Have the user write the buying and selling rule before the first trade, as the premortem in [portfolio-care.md](portfolio-care.md#before-a-large-move) asks (book rule, unverified).
 
 ## A value of your own
 
@@ -49,7 +50,7 @@ Source: Damodaran, *The Little Book of Valuation* (Wiley 2011; updated 2024), ch
   - Compare with the median. In the book's January 2010 table, the EV/sales mean was 13.35 and the median 1.13.
   - Ask why it differs from peers: growth, risk and margin. A high multiple with no path to a margin is the warning.
   - Choose peers by cash flows, growth and risk, not only by sector, and use the current figure. A multiple goes stale in months.
-- **A young company with little revenue:** estimate revenue about five years out from a stated market size and share, use the multiple mature peers trade at today (not one that assumes today's growth), then discount and allow for failure. `FW forward-value` does the arithmetic. The book takes the failure rate from sector survival data, adjusted for the company's cash and access to capital. Run a low, middle and high case, and report a range.
+- **A young company with little revenue:** estimate revenue about five years out from a stated market size and share, use the multiple mature peers trade at today (not one that assumes today's growth), then discount and allow for failure. `FW forward-value` does the arithmetic. The book takes the failure rate from sector survival data, adjusted for the company's cash and access to capital. Run a low, middle and high case, report a range, and name the low case as the worst one, not as a floor.
 - **What can go wrong:** the book's young-company example, Evergreen Solar, needed new capital for eight years and came out at $0.42 to $1.31 a share against a $2.70 price in early 2009. It filed for Chapter 11 on 2011-08-15, with nothing expected for shareholders (its 8-K). One case agreeing with the method is not proof of the method.
 - **Before dividing by shares:** count options and RSUs. If the public holds lower-vote shares and a founder holds higher-vote ones, the book cites a 5 to 10% voting premium in US studies; the source is not named and was not checked, so treat the public class as worth slightly less than an equal split.
 - **Even a good valuation can lose:** the market must correct, and luck can swamp the work. Spread bets. That supports the size limits above.
