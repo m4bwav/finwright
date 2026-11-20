@@ -646,6 +646,20 @@ ENCODING:USASCII
         self.assertEqual(fw.quarter_end(dt.date(2026, 11, 26)), dt.date(2026, 12, 31))
         self.assertEqual(fw.quarter_end(dt.date(2026, 3, 31)), dt.date(2026, 3, 31))
 
+    def test_normalize_and_distress(self):
+        out = self.fw("normalize", "--revenue", "100M", "--margins", "0.10,0.20,0.00,0.10,0.10")
+        self.assertIn("10.00%", out)
+        self.assertIn("$10.00M", out)
+        self.assertNotIn("Fewer than five", out)
+        self.assertIn("Fewer than five", self.fw("normalize", "--revenue", "100M", "--margins", "0.3,0.25"))
+        out = self.fw("distress", "--going-concern", "900M", "--p-fail", "0.25", "--sale-proceeds", "100M")
+        self.assertIn("$700.00M", out)   # 900 x 0.75 + 100 x 0.25
+        self.assertIn("$200.00M", out)   # overstatement
+        code, _, _ = run("--data", self.d, "distress", "--going-concern", "900M", "--p-fail", "1.5", "--sale-proceeds", "1")
+        self.assertNotEqual(code, 0)
+        code, _, _ = run("--data", self.d, "normalize", "--revenue", "1M", "--margins", "12")
+        self.assertNotEqual(code, 0)
+
     def test_forward_value_and_net_debt(self):
         out = self.fw("forward-value", "--revenue", "500M", "--multiple", "2", "--years", "2", "--rate", "0.25",
                       "--survival", "0.5", "--cash", "60M", "--debt", "10M", "--shares", "10M")
