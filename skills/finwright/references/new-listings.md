@@ -41,7 +41,7 @@ How to help a user who wants to buy a company that is going public, or any singl
 
 ## A value of your own
 
-Source: Damodaran, *The Little Book of Valuation* (Wiley 2011; updated 2024), ch. 1, 4, 5, 6. Its worked figures are from 2009 and 2010: use the method, not the numbers.
+Source: Damodaran, *The Little Book of Valuation* (Wiley 2011; updated 2024), ch. 1 to 11. Its worked figures are from 2009 and 2010: use the method, not the numbers.
 
 - **Two different questions.** Intrinsic value asks what the cash flows and risk are worth. Relative value asks whether it is cheap against similar companies. They can disagree, and the book's own Under Armour example does. Say which one you are answering.
 - **Put the user's reason on paper first.** Why this company? Do they already own it or like its founder? The more someone wants a conclusion, the less the valuation is worth. Read the filing before opinion pieces.
@@ -53,6 +53,14 @@ Source: Damodaran, *The Little Book of Valuation* (Wiley 2011; updated 2024), ch
 - **A young company with little revenue:** estimate revenue about five years out from a stated market size and share, use the multiple mature peers trade at today (not one that assumes today's growth), then discount and allow for failure. `FW forward-value` does the arithmetic. The book takes the failure rate from sector survival data, adjusted for the company's cash and access to capital. Run a low, middle and high case, report a range, and name the low case as the worst one, not as a floor.
 - **What can go wrong:** the book's young-company example, Evergreen Solar, needed new capital for eight years and came out at $0.42 to $1.31 a share against a $2.70 price in early 2009. It filed for Chapter 11 on 2011-08-15, with nothing expected for shareholders (its 8-K). One case agreeing with the method is not proof of the method.
 - **Before dividing by shares:** count options and RSUs. If the public holds lower-vote shares and a founder holds higher-vote ones, the book cites a 5 to 10% voting premium in US studies; the source is not named and was not checked, so treat the public class as worth slightly less than an equal split.
+- **Report a range, not digits** (ch. 1). A young company's value is honestly wider than a mature one's. Use the fewest inputs and the shortest forecast that answer the question. A premium (control, synergy) or discount (illiquidity) added after the model gets its own line and reason.
+- **A gap inside the error band is not a buy** (ch. 3). Price below value means the inputs are wrong, the risk premium is wrong, or the market is wrong; only the last pays, over three to five years. Do not call a stock undervalued unless the gap is wider than the low-to-high range, and treat a gap under about 10 to 15% as noise.
+- **Pick the method by the kind of company** (ch. 7 to 11):
+  - Bank or insurer: debt is raw material, so value the equity only (dividends, or return on equity above its cost). Skip `FW ipo --net-debt` and every enterprise-value multiple. Check the dividend is covered.
+  - Cyclical or commodity firm: never value a peak or trough year. `FW normalize` applies the average margin over five to ten years to current revenue; a low price-to-earnings at the top of a cycle is a trap. A normalized commodity price is itself a view on the commodity, so say so.
+  - Declining or distressed firm: a low multiple is what distress looks like, not a bargain. `FW distress` weights the going-concern value by survival and a forced sale by failure.
+  - R&D-heavy firm: research is investment booked as expense, so its earnings and price-to-earnings do not compare with an industrial's until R&D is capitalised. Count expected future option grants as a cost too.
+  - Changing debt (debt-funded buybacks): compare enterprise-value multiples, not price-to-earnings or price-to-book. A value that assumes better management is worth only that gain times the chance management actually changes; a founder's voting class or anti-takeover rules lower that chance.
 - **Even a good valuation can lose:** the market must correct, and luck can swamp the work. Spread bets. That supports the size limits above.
 
 ## Reading the statements

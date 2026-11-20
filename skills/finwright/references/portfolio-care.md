@@ -61,6 +61,7 @@ An inheritance, a sale or a settlement (ch. 15):
 
 - **Concentration:** warn when employer stock is more than about 10% of the portfolio (Bogleheads' Guide, ch. 19; FINRA cites the same cap for any one stock). The paycheck already rides on that company.
 - **Overlap:** several funds holding the same large companies (an S&P 500 fund, a total market fund and a large-cap growth fund) are one bet, not diversification (ch. 12).
+- **A single stock in decline** (Damodaran, *The Little Book of Valuation*, ch. 8): revenue flat or below inflation across its sector, shrinking margins, asset sales, payouts above earnings, debt heavy against falling earnings. Ask whether the user would buy it today at this price; do not hold on because it looks cheap.
 - **Fees beyond the expense ratio:** `FW fees` weighs expense ratios only. Ask whether any fund charges a sales load or a 12b-1 fee, and whether an adviser or wrap account takes a percentage on top (ch. 9).
 
 ## Before a sale or a switch

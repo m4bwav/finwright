@@ -22,7 +22,7 @@ import urllib.request
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation, getcontext
 from pathlib import Path
 
-VERSION = "0.12.0"
+VERSION = "0.13.0"
 getcontext().prec = 28
 CENT = Decimal("0.01")
 DISCLAIMER = ("Use at your own risk: guidance from your own records and published research, not a licensed "
@@ -1012,6 +1012,35 @@ def cmd_forward_value(args) -> None:
     print(DISCLAIMER)
 
 
+def cmd_normalize(args) -> None:
+    """Damodaran ch. 10: a cyclical's operating income from its average margin over a cycle, never a peak or trough year."""
+    revenue = positive(args.revenue, "--revenue", big)
+    margins = [money(m) for m in args.margins.split(",") if m.strip()]
+    if not margins or any(abs(m) >= 1 for m in margins):
+        raise FwError("--margins are yearly operating margins as fractions: 0.12,0.08,-0.02")
+    avg = sum(margins) / len(margins)
+    print(f"Average margin over {len(margins)} years: {pct(avg)} (range {pct(min(margins))} to {pct(max(margins))})")
+    print(f"Normalized operating income: {short(revenue * avg) if avg >= 0 else '-' + short(-revenue * avg)} "
+          f"on {short(revenue)} revenue; latest year's margin {pct(margins[-1])}")
+    if len(margins) < 5:
+        print("  Fewer than five years may not span a full cycle: use the sector's average margin instead.")
+    print(DISCLAIMER)
+
+
+def cmd_distress(args) -> None:
+    """Damodaran ch. 8: a going-concern value weighted by survival, plus a distress sale weighted by failure."""
+    going = positive(args.going_concern, "--going-concern", big)
+    sale = big(args.sale_proceeds)
+    p = money(args.p_fail)
+    if not 0 <= p <= 1 or sale < 0:
+        raise FwError("--p-fail is a fraction from 0 to 1 and --sale-proceeds is not negative")
+    value = going * (1 - p) + sale * p
+    print(f"Expected value: {short(value)} = {short(going)} x {pct(1 - p)} survival + {short(sale)} x {pct(p)} failure")
+    print(f"  A plain cash-flow value ({short(going)}) overstates a distressed firm by {short(going - value)}. "
+          "A low multiple on a shrinking, indebted firm is not by itself cheap (references/new-listings.md).")
+    print(DISCLAIMER)
+
+
 def cmd_ipo(args) -> None:
     shares = positive(args.shares, "--shares", big) if args.shares else None
     if shares is not None and shares < 1:
@@ -1525,6 +1554,15 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--debt", help="debt today")
     s.add_argument("--shares", help="share count, for a per-share value")
     s.set_defaults(fn=cmd_forward_value)
+    s = sub.add_parser("normalize", help="a cyclical's operating income from its average margin over a full cycle")
+    s.add_argument("--revenue", required=True, help="current revenue: 40B")
+    s.add_argument("--margins", required=True, help="yearly operating margins, oldest first: 0.12,0.08,-0.02")
+    s.set_defaults(fn=cmd_normalize)
+    s = sub.add_parser("distress", help="a distressed firm's value weighted by its chance of failing")
+    s.add_argument("--going-concern", required=True, help="value if it survives: 900M")
+    s.add_argument("--p-fail", required=True, help="chance it fails: 0.3")
+    s.add_argument("--sale-proceeds", required=True, help="what a distress sale would fetch: 300M")
+    s.set_defaults(fn=cmd_distress)
     s = sub.add_parser("position", help="what a single-stock buy would be against the records: concentration, "
                        "emergency fund, a ladder of limit orders")
     s.add_argument("amount")
