@@ -638,6 +638,16 @@ ENCODING:USASCII
         self.assertTrue(any(l.lstrip().startswith("I bond") for l in lines))
         self.assertEqual(run("--data", self.d, "compare", "100", "--option", "bad")[0], 2)
 
+    def test_compare_and_mortgage_print_break_even(self):
+        out = self.fw("compare", "10000", "--option", "Savings=4:full", "--option", "Pay loan=3.875:none",
+                      "--state", "0.05")
+        self.assertIn("Break-even: Savings ties Pay loan at a rate of 5.308%", out)  # 3.875 / (1 - 0.27)
+        self.assertNotIn("Break-even", self.fw("compare", "10000", "--option", "Savings=4:full"))
+        self.household()
+        lump = self.fw("mortgage", "--rate", "4", "--payment", "1500", "--lump", "10000")
+        self.assertIn("Break-even: the advice flips when another use of the $10,000.00 returns more than 4%", lump)
+        self.assertNotIn("Break-even", self.fw("mortgage", "--rate", "4", "--payment", "1500"))
+
     def test_big_amounts(self):
         self.assertEqual(fw.big("1.5T"), Decimal("1500000000000"))
         self.assertEqual(fw.big("$16.8b"), Decimal("16800000000"))
