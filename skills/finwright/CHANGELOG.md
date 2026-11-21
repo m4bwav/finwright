@@ -4,6 +4,10 @@ Every change to [SKILL.md](SKILL.md) and its companions, newest first, each with
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261121-2 · 2026-11-21 · Market numbers for one ticker: stats, bounce base rates, bootstrap range, sale tax facts (0.14.0)
+because: user request (questions like "will it bounce Monday after an after-hours drop" answered with counts instead of guesses); research/2026-11-21-market-data-and-base-rates.md
+files: scripts/fw_markets.py (new: market stats, bounce, range, sale), scripts/fw.py (parser hook, two lines), tests/test_fw.py (MarketsTest, five tests on an invented ticker), references/markets.md (new), SKILL.md (Other jobs, References), evals/evals.json (trigger-8, trigger-9, decoy-3, outcome-4), AGENTS.md, version files. Offline only: the user supplies the price CSV. Not built: a fetch command (the source and the network call wait on the maintainer), 2026 long-term rate brackets in data/rates.json (secondary source only so far).
+
 ### C-20261121-1 · 2026-11-21 · Risk as odds and amounts, break-even in compare and mortgage, no valuation timing (0.13.1)
 because: user request (book distillation, Hubbard *How to Measure Anything* ch. 4 and 6; Silver *The Signal and the Noise* ch. 11); book rules, unverified by any outside check
 files: scripts/fw.py (cmd_compare, cmd_mortgage break-even lines), tests/test_fw.py (test_compare_and_mortgage_print_break_even), references/rules.md (rule 17), references/next-dollar.md (Goals and risk, Investing, How to answer), references/new-listings.md (How to answer), version files. Failure codes `ordinal-risk`, `no-flip-value`, `valuation-timing`.
