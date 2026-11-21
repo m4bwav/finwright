@@ -22,7 +22,7 @@ import urllib.request
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation, getcontext
 from pathlib import Path
 
-VERSION = "0.13.0"
+VERSION = "0.13.1"
 getcontext().prec = 28
 CENT = Decimal("0.01")
 DISCLAIMER = ("Use at your own risk: guidance from your own records and published research, not a licensed "
@@ -870,6 +870,8 @@ def cmd_mortgage(args) -> None:
               "until the loan is gone, and getting it back out takes a new loan.")
         print(f"  It earns the loan's rate, {rate}% a year, with no risk; that is tax-free when the mortgage "
               "interest is not itemized (most households take the standard deduction).")
+        print(f"  Break-even: the advice flips when another use of the {fmt(lump)} returns more than {rate}% a "
+              "year after tax at the same risk; below that, the prepayment wins.")
     print("  Escrow (property tax, insurance) goes on after payoff; it is not in these figures.")
     print(DISCLAIMER)
 
@@ -936,13 +938,16 @@ def cmd_compare(args) -> None:
         name, rate, kind = compare_option(spec, rates)
         cut = {"none": Decimal(0), "federal": fed}.get(kind, fed + state)
         y = rate / 100 * (1 - cut)
-        rows.append((y, name, rate, kind, amount * (1 + y) ** years))
+        rows.append((y, name, rate, kind, amount * (1 + y) ** years, cut))
     rows.sort(key=lambda r: r[0], reverse=True)
     print(f"{fmt(amount)} for {years} years, federal {pct(fed)}, state {pct(state)}; "
           "after-tax yield, best first:")
     print(f"  {'option':<26}{'rate':>8}  {'taxed':<18}{'after tax':>10}{'after ' + str(years) + ' years':>18}")
-    for y, name, rate, kind, fv in rows:
+    for y, name, rate, kind, fv, _ in rows:
         print(f"  {name[:25]:<26}{str(rate) + '%':>8}  {TAX_KINDS[kind]:<18}{pct(y):>10}{fmt(fv):>18}")
+    if len(rows) > 1 and rows[1][5] < 1:
+        tie = (rows[0][0] * 100 / (1 - rows[1][5])).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)
+        print(f"  Break-even: {rows[1][1][:25]} ties {rows[0][1][:25]} at a rate of {tie}%; the ranking flips above it.")
     print("  Fixed and today's rates only: a stock fund has no promised rate, so it is a separate choice about risk. "
           "Savings and I bond rates move; I bond tax can be deferred to redemption, which this ignores.")
     print("  Access differs: savings same day, Treasury bills at maturity, an I bond after 12 months (3 months' "

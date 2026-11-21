@@ -115,6 +115,8 @@ Source: Marshall, McManus and Viele, *Accounting: What the Numbers Mean* (10th e
 
 ## How to answer
 
+A P/E or CAPE judges the price against long-run returns; it is never a reason to wait for a better day to start investing (`valuation-timing`, rule 17 in [rules.md](rules.md)).
+
 1. Collect the facts: `FW networth`, the steps in next-dollar.md, the prospectus numbers, and the broker and account.
 2. Run the numbers:
    - `FW ipo --valuation <values> --revenue-q <quarter> --shares <count> --list-date <date>` (or `--price <low> <high>` with `--shares`) for per-share prices, the multiple and the dates. Add `--net-debt <amount>` for enterprise value to revenue.
@@ -122,6 +124,6 @@ Source: Marshall, McManus and Viele, *Accounting: What the Numbers Mean* (10th e
 3. Recommend:
    - **A size.** Usually 5% of investable assets or less for one new stock, and only from money past the earlier steps.
    - **An entry plan.** No market orders; a ladder of limits below the first-day price over the weeks after listing; the lock-up date marked.
-   - **What would change the answer.** A multiple far above peers, the user's emergency fund, or a fill at the offer price.
+   - **What would change the answer,** as a value: the multiple, price or fund size at which you would say no. For example a multiple far above peers, the user's emergency fund, or a fill at the offer price.
    - Use the user's own numbers. The user decides and places the orders.
 4. Say plainly that a new listing can lose most or all of its value, that the user acts at their own risk, and that the money should be money they can afford to lose. End with fw.py's disclaimer line.

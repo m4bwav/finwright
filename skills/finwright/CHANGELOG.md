@@ -4,6 +4,10 @@ Every change to [SKILL.md](SKILL.md) and its companions, newest first, each with
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261121-1 · 2026-11-21 · Risk as odds and amounts, break-even in compare and mortgage, no valuation timing (0.13.1)
+because: user request (book distillation, Hubbard *How to Measure Anything* ch. 4 and 6; Silver *The Signal and the Noise* ch. 11); book rules, unverified by any outside check
+files: scripts/fw.py (cmd_compare, cmd_mortgage break-even lines), tests/test_fw.py (test_compare_and_mortgage_print_break_even), references/rules.md (rule 17), references/next-dollar.md (Goals and risk, Investing, How to answer), references/new-listings.md (How to answer), version files. Failure codes `ordinal-risk`, `no-flip-value`, `valuation-timing`.
+
 ### C-20261119-1 · 2026-11-19 · Valuation by kind of company: normalize and distress commands, sector rules, error band (0.13.0)
 because: user request (book distillation, *The Little Book of Valuation* by Aswath Damodaran, 2011, ch. 1, 3, 7 to 11); book rules, unverified by any outside check
 files: scripts/fw.py (normalize, distress), tests/test_fw.py (test_normalize_and_distress), references/new-listings.md (A value of your own), references/portfolio-care.md (Reviewing holdings), version files. Not built: a terminal-growth guard (no fw.py command takes a growth rate), dated worked figures.
