@@ -8,6 +8,14 @@ Entries here are public. They never name the user's institutions, employers, pla
 
 ## Active
 
+### L-022 · 2026-11-21 · `bounce-question-is-a-coin-flip`: a "will it bounce" question needs this ticker's own count, not a story
+- Trigger: a user asked whether a stock that fell sharply after hours would bounce the next session and then fall.
+- Hypothesis: short-term reversal after big one-day drops is small, partly bid-ask bounce, and drops with news keep drifting; a chat answer turns a near coin flip into a confident call.
+- Rule: run `FW market bounce` (with a benchmark) and `FW market range` first; lead with the count and sample size; under 30 cases or within about ten points of 50%, say it is a coin flip on this evidence.
+- Evidence: research/2026-11-21-market-data-and-base-rates.md, section 2 (cited from memory there; re-check before quoting figures)
+- Scope: skill
+- Status: active · helpful 0 · harmful 0 · last_confirmed 2026-11-21
+
 ### L-001 · 2026-10-13 · `bofa-activity-csv-shape`: Bank of America activity CSVs have a summary block and no account number
 - Trigger: Bank of America activity CSVs carry no account identifier, and repeat downloads are named stmt.csv, stmt(1).csv.
 - Hypothesis: the bank exports the same layout for every deposit account; only the download order tells them apart.

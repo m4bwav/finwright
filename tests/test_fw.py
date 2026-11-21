@@ -854,5 +854,70 @@ ENCODING:USASCII
         self.assertIn("read 1 messages", out)
         self.assertIn("1 mention retirement accounts", out)
 
+
+class MarketsTest(FwTest):
+    """fw.py market: invented ticker ZZZT, prices built in the test, no network."""
+
+    def prices(self, closes, name="zzzt.csv"):
+        f = Path(self.tmp.name) / name
+        start, prev, rows = dt.date(2026, 1, 1), closes[0], []
+        for i, c in enumerate(closes):
+            vol = 3000 if i == len(closes) - 1 else 1000
+            rows.append(f"{start + dt.timedelta(days=i)},{prev},{max(prev, c)},{min(prev, c)},{c},{vol}")
+            prev = c
+        f.write_text("\n".join(["Date,Open,High,Low,Close,Volume"] + rows[::-1]) + "\n")  # newest first
+        return str(f)
+
+    def test_stats_numbers(self):
+        f = self.prices([100, 110, 99, 120] + [120] * 20 + [108])
+        out = self.fw("market", "stats", f, "--symbol", "zzzt", "--ipo-price", "90", "--after-hours", "102.6")
+        self.assertIn("ZZZT: close $108.00", out)
+        self.assertIn("1 day -10.0%", out)
+        self.assertIn("-10.0% from the high", out)
+        self.assertIn("Against the IPO price $90.00: +20.0%", out)
+        self.assertIn("After-hours price against the close: -5.0%", out)
+        self.assertIn("Volume 3.0x", out)
+        self.assertIn("Last open against the prior close: +0.0%", out)
+
+    def test_bounce_counts_and_thin_warning(self):
+        import fw_markets
+        f = self.prices([100, 90, 95, 96, 97, 98, 99, 80, 79, 85, 86, 87, 88])
+        b = fw_markets.bounce(fw_markets.read_prices(f), 0.05)
+        self.assertEqual(b["events"], 2)
+        self.assertEqual((b["horizons"][1]["n"], b["horizons"][1]["up"]), (2, 1))
+        self.assertEqual(b["horizons"][2]["up"], 2)
+        out = self.fw("market", "bounce", f, "--drop", "5", "--benchmark", f)
+        self.assertIn("2 days closed down 5% or more", out)
+        self.assertIn("Thin sample", out)
+        self.assertIn("Benchmark zzzt", out)
+
+    def test_range_is_seeded_and_ordered(self):
+        f = self.prices([100 + (i % 7) - 3 for i in range(60)])
+        a = self.fw("market", "range", f, "--days", "5", "--paths", "500", "--seed", "7")
+        self.assertEqual(a, self.fw("market", "range", f, "--days", "5", "--paths", "500", "--seed", "7"))
+        self.assertIn("95th percentile", a)
+        code, _, err = run("--data", self.d, "market", "range", self.prices([100, 101, 102], name="short.csv"))
+        self.assertNotEqual(code, 0)
+        self.assertIn("need at least 30", err)
+
+    def test_sale_holding_period_and_wash(self):
+        out = self.fw("market", "sale", "--bought", "2025-10-12", "--cost", "50", "--shares", "10",
+                      "--price", "40", "--sold", "2026-10-12", "--bought-again", "2026-11-01", "2026-12-20")
+        self.assertIn("loss $100.00, short-term", out)
+        self.assertIn("long-term from 2026-10-13", out)
+        self.assertIn("2026-09-12 to 2026-11-11", out)
+        self.assertIn("Purchases in the window: 2026-11-01:", out)
+        out = self.fw("market", "sale", "--bought", "2024-02-29", "--cost", "10", "--shares", "1",
+                      "--price", "15", "--sold", "2025-03-02")
+        self.assertIn("gain $5.00, long-term", out)
+
+    def test_bad_price_files(self):
+        f = Path(self.tmp.name) / "bad.csv"
+        f.write_text("Date,Price\n2026-01-01,5\n")
+        self.assertIn("need a header with date and close", run("--data", self.d, "market", "stats", str(f))[2])
+        f.write_text("Date,Close\n2026-01-01,5\n2026-01-01,6\n")
+        self.assertIn("appears twice", run("--data", self.d, "market", "stats", str(f))[2])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=1)
