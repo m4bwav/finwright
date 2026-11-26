@@ -2,7 +2,7 @@
 
 ![An open ledger, a desk calculator and a closed brass padlock beside a stack of paper statements under a green desk lamp](https://raw.githubusercontent.com/m4bwav/finwright/master/.github/images/banner.jpg)
 
-Your own net worth records and checks, kept on your machine, with an AI agent doing the clerical work and a script doing every calculation. A plugin for Claude Code (and any agent that reads skills), with one skill, a standard-library Python CLI and a guard hook.
+Your own net worth records and checks, kept on your machine, with an AI agent doing the clerical work and a script doing every calculation. A plugin for AI coding agents (Claude Code, Copilot, Codex, Cursor, Gemini CLI), with one skill, a standard-library Python CLI and a guard hook.
 
 - **What it tracks:** bank and card balances, 401(k)s and IRAs, brokerage holdings, savings bonds, the home, and loans.
 - **Savings bonds:** I and EE bonds are valued from Treasury's own published value files, with no login.
