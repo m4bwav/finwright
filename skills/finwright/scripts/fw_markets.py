@@ -311,6 +311,20 @@ def cmd_range(args) -> None:
           + " Command: fw.py market range")
 
 
+def long_rate_line(year: int) -> str:
+    """The long-term rate thresholds for the sale year from rates.json, or a refusal to guess."""
+    from fw import load_rates
+    cg = load_rates().get("capital_gains", {}).get(str(year))
+    if not cg:
+        return f"No {year} long-term rate brackets in rates.json; refresh the skill, do not guess."
+    v = cg["values"]
+    def pair(k):
+        return f"{fmt(money(v[k]['zero_up_to']))} / {fmt(money(v[k]['fifteen_up_to']))}"
+    return (f"{year} long-term rate by taxable income: 0% up to, then 15% up to (20% above): single {pair('single')}, "
+            f"joint {pair('married_joint')}, head of household {pair('head_of_household')}; plus 3.8% NIIT above "
+            f"$200,000 / $250,000 MAGI. Source: Rev. Proc. 2025-32 (rates.json, checked {cg['checked']}).")
+
+
 def cmd_sale(args) -> None:
     shares = money(args.shares)
     if shares <= 0:
@@ -331,6 +345,8 @@ def cmd_sale(args) -> None:
         if r["wash"]:
             print("  Purchases in the window: " + ", ".join(d.isoformat() for d in r["hits"])
                   + ": this loss would be a wash sale, at least in part.")
+    elif r["long_term"]:
+        print("  " + long_rate_line(sold.year))
     print("  Check the lot and basis on the broker's 1099-B; filing questions go to a CPA or enrolled agent. "
           + DISCLAIMER)
 

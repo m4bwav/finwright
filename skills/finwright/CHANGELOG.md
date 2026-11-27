@@ -4,6 +4,10 @@ Every change to [SKILL.md](SKILL.md) and its companions, newest first, each with
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261127-2 · 2026-11-27 · 2026 long-term capital gains brackets from the IRS source; market sale shows them (0.15.1)
+because: research/2026-11-21-market-data-and-base-rates.md (brackets had only a secondary source); IRS Rev. Proc. 2025-32 section 3.03 read 2026-11-27
+files: data/rates.json (capital_gains, 2026), scripts/fw_markets.py (long_rate_line, cmd_sale), tests/test_fw.py (test_sale_holding_period_and_wash), version files. A long-term sale prints the sale year's 0% and 15% thresholds by filing status and the 3.8% NIIT line; a year with no entry says so instead of guessing.
+
 ### C-20261127-1 · 2026-11-27 · market fetch: daily prices from Tiingo with the user's own key (0.15.0)
 because: user request (maintainer's answer on the stock analysis decision page: Tiingo, each user's own free key in the OS keyring; keep it inside finwright; advice wording as built); research/2026-11-21-market-data-and-base-rates.md (Tiingo)
 files: scripts/fw_markets.py (fetch_tiingo, tiingo_key, write_prices, market fetch and market key), scripts/fw.py (docstring: two network calls), tests/test_fw.py (MarketFetchTest, three tests with a fake opener, no network), references/markets.md (Getting prices), SKILL.md (Other jobs), version files. A read-only GET; the key travels in the Authorization header, never the URL or a file; the optional keyring package is imported only inside the key functions. Not built: 2026 long-term rate brackets in data/rates.json.
