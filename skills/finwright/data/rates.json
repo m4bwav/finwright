@@ -28,6 +28,23 @@
       ]
     }
   },
+  "capital_gains": {
+    "2026": {
+      "source": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf (Rev. Proc. 2025-32, section 3.03; IRC 1(h), 1(j)(5))",
+      "checked": "2026-11-27",
+      "what": "Taxable income (not the gain alone) up to which long-term gains and qualified dividends are taxed at 0%, then 15%; above the second figure, 20%.",
+      "values": {
+        "single": {"zero_up_to": "49450", "fifteen_up_to": "545500"},
+        "married_joint": {"zero_up_to": "98900", "fifteen_up_to": "613700"},
+        "married_separate": {"zero_up_to": "49450", "fifteen_up_to": "306850"},
+        "head_of_household": {"zero_up_to": "66200", "fifteen_up_to": "579600"}
+      },
+      "notes": [
+        "Net investment income tax of 3.8% applies on top above modified AGI of $200,000 (single, head of household), $250,000 (joint) or $125,000 (separate); IRC 1411, not indexed.",
+        "Short-term gains are taxed as ordinary income."
+      ]
+    }
+  },
   "savings_bond_rates": [
     {"series": "I", "from": "2026-11", "to": "2027-04", "composite": "5.51", "fixed": "1.40", "semiannual_inflation": "2.04", "source": "https://treasurydirect.gov/savings-bonds/i-bonds/i-bonds-interest-rates/"},
     {"series": "I", "from": "2026-05", "to": "2026-10", "composite": "4.26", "fixed": "0.90", "semiannual_inflation": "1.67", "source": "https://treasurydirect.gov/news/2026/release-05-01-rates/"},

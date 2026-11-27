@@ -978,6 +978,11 @@ class MarketsTest(FwTest):
         out = self.fw("market", "sale", "--bought", "2024-02-29", "--cost", "10", "--shares", "1",
                       "--price", "15", "--sold", "2025-03-02")
         self.assertIn("gain $5.00, long-term", out)
+        self.assertIn("No 2025 long-term rate brackets", out)
+        out = self.fw("market", "sale", "--bought", "2025-01-02", "--cost", "10", "--shares", "1",
+                      "--price", "15", "--sold", "2026-03-02")
+        self.assertIn("single $49,450.00 / $545,500.00", out)
+        self.assertIn("joint $98,900.00 / $613,700.00", out)
 
     def test_bad_price_files(self):
         f = Path(self.tmp.name) / "bad.csv"
