@@ -2,9 +2,13 @@
 
 Read this when the user asks what a stock will do next ("will it bounce Monday", "is this the bottom", "dead cat bounce?"), how a holding has moved, how big a position should be, or what selling a lot costs in tax. Research: [market data sources and base rates](../../../research/2026-11-21-market-data-and-base-rates.md) (2026-11-21; entries marked [R] there were cited from memory and need a re-check before a figure is quoted).
 
-## Getting prices (no network in fw.py yet)
+## Getting prices
 
-fw.py reads a daily price CSV with a header holding `date` and `close` (or `adj close`); `open`, `high`, `low` and `volume` add the gap, range and volume lines. Newest-first or oldest-first both work. The user downloads it themselves, for example from their broker's history export or a data site's CSV button, and keeps it in their data folder. A fetch command is not built: which source, and whether a network call goes in at all, waits on the maintainer (see the research file for the terms of each).
+fw.py reads a daily price CSV with a header holding `date` and `close` (or `adj close`); `open`, `high`, `low` and `volume` add the gap, range and volume lines. Newest-first or oldest-first both work.
+
+- `FW market fetch <ticker> [--years 5 | --start D] [--end D] [--replace]`: a read-only GET of Tiingo's end-of-day prices, adjusted for splits and dividends, into `<data>/markets/<TICKER>.csv`. Later pulls keep older cached days; after a split or dividend use `--replace` so the adjusted history lines up. Tiingo's free plan allows about 50 requests an hour and is for personal use, so never share the file.
+- The key is the user's own free Tiingo token. `FW market key` prompts for it without echo and saves it in the OS keyring (needs `pip install keyring`); `TIINGO_API_KEY` in the shell works as a fallback. Never ask the user to paste the token into chat, never write it to a file, never put it in a URL.
+- Without a key, the user can download a CSV from their broker's history export or a data site and keep it in their data folder.
 
 ## Commands
 

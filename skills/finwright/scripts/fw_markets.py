@@ -8,25 +8,37 @@ counts how often a drop of at least X% in this ticker (and in a benchmark file) 
 seed, in blocks of five days. `market sale` gives the holding period, the wash-sale window and the gain or loss of a lot.
 
 Input is a CSV with a header holding at least `date` and `close` (and optionally `open`, `high`, `low`,
-`volume`), oldest or newest first. No network: the user supplies the file. Standard library only; prices and
-money in Decimal, ratios of returns in float.
+`volume`), oldest or newest first. The user supplies the file, or `market fetch` writes one: the only network
+call here, a read-only GET of Tiingo's end-of-day prices with the user's own free key (kept in the OS keyring
+through the optional `keyring` package, else the TIINGO_API_KEY variable; never in a file). Standard library
+only otherwise; prices and money in Decimal, ratios of returns in float.
 """
 from __future__ import annotations
 
 import csv
 import datetime as dt
+import json
 import math
+import os
+import re
 import random
 import statistics
 from decimal import Decimal, InvalidOperation
+import urllib.error
+import urllib.parse
+import urllib.request
 from pathlib import Path
 
-from fw import DISCLAIMER, FwError, fmt, money, parse_date, today
+from fw import DISCLAIMER, VERSION, FwError, data_dir, fmt, money, parse_date, today
 
 THIN = 30            # our number: fewer past cases than this and a base rate is called thin
 TRADING_DAYS = 252   # annualising factor for daily volatility
 BLOCK = 5            # our number: days per bootstrap block (a trading week)
 WINDOWS = (("1 day", 1), ("5 days", 5), ("1 month", 21), ("3 months", 63), ("1 year", 252))
+TIINGO = "https://api.tiingo.com/tiingo/daily/{}/prices"
+KEY_SERVICE, KEY_USER = "finwright", "tiingo"
+SYMBOL = re.compile(r"^[A-Za-z0-9][A-Za-z0-9.-]{0,11}$")
+COLS = ("date", "open", "high", "low", "close", "volume")
 NOT_ADVICE = "Past moves in this file, not a forecast and not personalised advice."
 
 
@@ -168,6 +180,70 @@ def sale(bought: dt.date, sold: dt.date, shares: Decimal, cost: Decimal, price: 
             "window": (lo, hi), "wash": gain < 0 and bool(hits), "hits": hits}
 
 
+# ---------- fetch (read-only, the user's own Tiingo key) ----------
+
+_urlopen = urllib.request.urlopen  # tests replace this; no network in tests
+
+
+def tiingo_key() -> str:
+    try:
+        import keyring  # optional third-party package; the OS keyring behind it holds the key
+        k = keyring.get_password(KEY_SERVICE, KEY_USER)
+        if k:
+            return k
+    except Exception:  # not installed, or no keyring backend on this machine
+        pass
+    k = os.environ.get("TIINGO_API_KEY", "").strip()
+    if not k:
+        raise FwError("no Tiingo key: run `fw.py market key` (needs `pip install keyring`) or set TIINGO_API_KEY "
+                      "for this shell. A free key comes from tiingo.com (account, API token).")
+    return k
+
+
+def fetch_tiingo(symbol: str, start: dt.date, end: dt.date, key: str) -> list[dict]:
+    """Daily rows from Tiingo, split- and dividend-adjusted, oldest first. GET only."""
+    if not SYMBOL.match(symbol):
+        raise FwError(f"not a ticker: {symbol!r}")
+    q = urllib.parse.urlencode({"startDate": start.isoformat(), "endDate": end.isoformat(), "format": "json"})
+    url = TIINGO.format(urllib.parse.quote(symbol.lower())) + "?" + q
+    req = urllib.request.Request(url, headers={"Authorization": f"Token {key}", "Accept": "application/json",
+                                               "User-Agent": f"finwright/{VERSION}"})
+    try:
+        with _urlopen(req, timeout=30) as h:
+            data = json.loads(h.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        why = {401: "the key was refused", 403: "the key was refused", 404: f"no ticker {symbol.upper()}",
+               429: "over the free plan's request limit; try again in an hour"}.get(e.code, f"HTTP {e.code}")
+        raise FwError(f"Tiingo: {why}") from None
+    except (urllib.error.URLError, TimeoutError) as e:
+        raise FwError(f"Tiingo unreachable: {e}") from None
+    if isinstance(data, dict):  # an error object instead of rows
+        raise FwError(f"Tiingo: {data.get('detail') or data}")
+    rows = []
+    for r in data:
+        try:
+            row = {"date": parse_date(str(r["date"])[:10]), "close": Decimal(str(r.get("adjClose", r["close"])))}
+            for k, src in (("open", "adjOpen"), ("high", "adjHigh"), ("low", "adjLow"), ("volume", "adjVolume")):
+                v = r.get(src, r.get(k))
+                if v is not None:
+                    row[k] = Decimal(str(v))
+        except (KeyError, InvalidOperation, ValueError, TypeError) as e:
+            raise FwError(f"Tiingo: unexpected row {r}: {e}") from None
+        rows.append(row)
+    return sorted(rows, key=lambda x: x["date"])
+
+
+def write_prices(path: Path, rows: list[dict]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(".tmp")
+    with tmp.open("w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(COLS)
+        for r in rows:
+            w.writerow([r["date"].isoformat()] + [str(r[k]) if k in r else "" for k in COLS[1:]])
+    tmp.replace(path)
+
+
 # ---------- commands ----------
 
 def cmd_stats(args) -> None:
@@ -259,6 +335,44 @@ def cmd_sale(args) -> None:
           + DISCLAIMER)
 
 
+def cmd_fetch(args) -> None:
+    sym = args.symbol.upper()
+    end = parse_date(args.end) if args.end else today()
+    start = parse_date(args.start) if args.start else end - dt.timedelta(days=round(365.25 * args.years))
+    if start > end:
+        raise FwError("--start is after --end")
+    out = Path(args.out) if args.out else data_dir(args) / "markets" / f"{sym}.csv"
+    new = fetch_tiingo(sym, start, end, tiingo_key())
+    if not new:
+        raise FwError(f"Tiingo returned no prices for {sym} from {start} to {end}")
+    have = {r["date"]: r for r in read_prices(str(out))} if out.is_file() else {}
+    # Older cached days stay unless --replace; after a split or dividend, adjusted history shifts, so replace then.
+    merged = {**({} if args.replace else {d: r for d, r in have.items() if d < new[0]["date"]}),
+              **{r["date"]: r for r in new}}
+    rows = [merged[d] for d in sorted(merged)]
+    write_prices(out, rows)
+    print(f"{sym}: {len(new)} days from Tiingo ({new[0]['date']} to {new[-1]['date']}), adjusted for splits and "
+          f"dividends; {len(rows)} days in {out}")
+    print(f"  Next: fw.py market stats {out} --symbol {sym}. Tiingo data is for personal use; do not share the file.")
+
+
+def cmd_key(args) -> None:
+    try:
+        import keyring
+    except ImportError:
+        raise FwError("the keyring package is missing: pip install keyring (or set TIINGO_API_KEY per shell)") from None
+    import getpass
+    if args.delete:
+        keyring.delete_password(KEY_SERVICE, KEY_USER)
+        print("Tiingo key removed from the keyring.")
+        return
+    k = getpass.getpass("Tiingo API token (not shown): ").strip()
+    if not re.fullmatch(r"[A-Za-z0-9]{20,64}", k):
+        raise FwError("that does not look like a Tiingo token (letters and digits)")
+    keyring.set_password(KEY_SERVICE, KEY_USER, k)
+    print(f"Tiingo key saved in the OS keyring as {KEY_SERVICE}/{KEY_USER}.")
+
+
 def add_parsers(sub) -> None:
     m = sub.add_parser("market", help="read-only numbers for one ticker from a daily price CSV"
                        ).add_subparsers(dest="sub", required=True)
@@ -289,3 +403,14 @@ def add_parsers(sub) -> None:
     s.add_argument("--sold", help="sale date (default today)")
     s.add_argument("--bought-again", nargs="+", help="dates of other purchases of the same security")
     s.set_defaults(fn=cmd_sale)
+    s = m.add_parser("fetch", help="download daily prices from Tiingo (read-only, your own key) into the data folder")
+    s.add_argument("symbol")
+    s.add_argument("--years", type=float, default=5, help="how far back when --start is not given (default 5)")
+    s.add_argument("--start")
+    s.add_argument("--end", help="default today")
+    s.add_argument("--out", help="CSV to write (default <data>/markets/<SYMBOL>.csv)")
+    s.add_argument("--replace", action="store_true", help="drop cached days older than this pull")
+    s.set_defaults(fn=cmd_fetch)
+    s = m.add_parser("key", help="save your Tiingo API token in the OS keyring (prompted, never echoed)")
+    s.add_argument("--delete", action="store_true")
+    s.set_defaults(fn=cmd_key)
