@@ -855,6 +855,74 @@ ENCODING:USASCII
         self.assertIn("1 mention retirement accounts", out)
 
 
+class MarketFetchTest(FwTest):
+    """fw.py market fetch: Tiingo replaced by a fake opener; invented ticker and key, no network."""
+
+    def setUp(self):
+        super().setUp()
+        import fw_markets
+        self.fm, self.calls, self.reply = fw_markets, [], None
+        self.saved = fw_markets._urlopen, fw_markets.tiingo_key
+        fw_markets.tiingo_key = lambda: "k" * 40
+
+        def fake(req, timeout=30):
+            self.calls.append(req)
+            if isinstance(self.reply, Exception):
+                raise self.reply
+            return io.BytesIO(json.dumps(self.reply).encode())
+        fw_markets._urlopen = fake
+
+    def tearDown(self):
+        self.fm._urlopen, self.fm.tiingo_key = self.saved
+        super().tearDown()
+
+    def rows(self, start, closes):
+        d = dt.date.fromisoformat(start)
+        return [{"date": f"{d + dt.timedelta(days=i)}T00:00:00.000Z", "close": c * 2, "adjClose": c,
+                 "adjOpen": c, "adjHigh": c + 1, "adjLow": c - 1, "adjVolume": 1000} for i, c in enumerate(closes)]
+
+    def test_fetch_writes_adjusted_csv_and_merges(self):
+        self.reply = self.rows("2026-10-01", [10, 11, 12])
+        out = self.fw("market", "fetch", "zzzt", "--start", "2026-10-01", "--end", "2026-10-03")
+        req = self.calls[0]
+        self.assertEqual(req.get_method(), "GET")
+        self.assertIn("/tiingo/daily/zzzt/prices?startDate=2026-10-01&endDate=2026-10-03", req.full_url)
+        self.assertNotIn("token=", req.full_url)  # the key goes in a header, never the URL
+        self.assertEqual(req.get_header("Authorization"), "Token " + "k" * 40)
+        f = Path(self.d) / "markets" / "ZZZT.csv"
+        self.assertIn("3 days in", out)
+        rows = self.fm.read_prices(str(f))
+        self.assertEqual([r["close"] for r in rows], [Decimal("10"), Decimal("11"), Decimal("12")])  # adjusted
+        self.reply = self.rows("2026-10-03", [13, 14])
+        self.assertIn("4 days in", self.fw("market", "fetch", "ZZZT", "--start", "2026-10-03"))
+        self.assertEqual([r["close"] for r in self.fm.read_prices(str(f))][-2:], [Decimal("13"), Decimal("14")])
+        self.reply = self.rows("2026-10-04", [20, 21])
+        self.assertIn("2 days in", self.fw("market", "fetch", "ZZZT", "--start", "2026-10-04", "--replace"))
+
+    def test_fetch_errors(self):
+        import urllib.error
+        code, _, err = run("--data", self.d, "market", "fetch", "zz/../x")
+        self.assertNotEqual(code, 0)
+        self.assertIn("not a ticker", err)
+        self.assertEqual(self.calls, [])
+        self.reply = urllib.error.HTTPError("u", 401, "no", {}, None)
+        self.assertIn("key was refused", run("--data", self.d, "market", "fetch", "ZZZT")[2])
+        self.reply = []
+        self.assertIn("no prices", run("--data", self.d, "market", "fetch", "ZZZT")[2])
+        self.reply = {"detail": "Not found."}
+        self.assertIn("Not found.", run("--data", self.d, "market", "fetch", "ZZZT")[2])
+
+    def test_no_key(self):
+        self.fm.tiingo_key = self.saved[1]
+        os.environ.pop("TIINGO_API_KEY", None)
+        import unittest.mock
+        with unittest.mock.patch.dict(sys.modules, {"keyring": None}):
+            code, _, err = run("--data", self.d, "market", "fetch", "ZZZT")
+        self.assertNotEqual(code, 0)
+        self.assertIn("no Tiingo key", err)
+        self.assertEqual(self.calls, [])
+
+
 class MarketsTest(FwTest):
     """fw.py market: invented ticker ZZZT, prices built in the test, no network."""
 

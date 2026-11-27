@@ -4,6 +4,10 @@ Every change to [SKILL.md](SKILL.md) and its companions, newest first, each with
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261127-1 · 2026-11-27 · market fetch: daily prices from Tiingo with the user's own key (0.15.0)
+because: user request (maintainer's answer on the stock analysis decision page: Tiingo, each user's own free key in the OS keyring; keep it inside finwright; advice wording as built); research/2026-11-21-market-data-and-base-rates.md (Tiingo)
+files: scripts/fw_markets.py (fetch_tiingo, tiingo_key, write_prices, market fetch and market key), scripts/fw.py (docstring: two network calls), tests/test_fw.py (MarketFetchTest, three tests with a fake opener, no network), references/markets.md (Getting prices), SKILL.md (Other jobs), version files. A read-only GET; the key travels in the Authorization header, never the URL or a file; the optional keyring package is imported only inside the key functions. Not built: 2026 long-term rate brackets in data/rates.json.
+
 ### C-20261121-2 · 2026-11-21 · Market numbers for one ticker: stats, bounce base rates, bootstrap range, sale tax facts (0.14.0)
 because: user request (questions like "will it bounce Monday after an after-hours drop" answered with counts instead of guesses); research/2026-11-21-market-data-and-base-rates.md
 files: scripts/fw_markets.py (new: market stats, bounce, range, sale), scripts/fw.py (parser hook, two lines), tests/test_fw.py (MarketsTest, five tests on an invented ticker), references/markets.md (new), SKILL.md (Other jobs, References), evals/evals.json (trigger-8, trigger-9, decoy-3, outcome-4), AGENTS.md, version files. Offline only: the user supplies the price CSV. Not built: a fetch command (the source and the network call wait on the maintainer), 2026 long-term rate brackets in data/rates.json (secondary source only so far).

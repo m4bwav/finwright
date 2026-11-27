@@ -2,8 +2,9 @@
 """finwright: personal net worth records and checks, kept locally, math in Decimal.
 
 Standard library only (Python 3.10+). Read-only toward every financial institution:
-it never logs in, never stores a password, never moves money. The one network call
-is `bond refresh`, which reads public Treasury savings bond values (no key, no login).
+it never logs in, never stores a password, never moves money. Two network calls, both read-only GETs: `bond refresh` reads
+public Treasury savings bond values (no key, no login), and `market fetch` (fw_markets.py)
+reads daily prices from Tiingo with the user's own free key from the OS keyring.
 
 Data lives in a folder outside any git repository: --data DIR, else $FINWRIGHT_DATA,
 else ~/finwright-data. Run `fw.py init` first.
@@ -22,7 +23,7 @@ import urllib.request
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation, getcontext
 from pathlib import Path
 
-VERSION = "0.14.0"
+VERSION = "0.15.0"
 getcontext().prec = 28
 CENT = Decimal("0.01")
 DISCLAIMER = ("Use at your own risk: guidance from your own records and published research, not a licensed "
