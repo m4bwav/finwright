@@ -4,6 +4,10 @@ Every change to [SKILL.md](SKILL.md) and its companions, newest first, each with
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261127-3 · 2026-11-27 · Description names questions about a held stock (0.15.2)
+because: market evals 2026-11-27, trigger-8 and trigger-9 fired 0 of 4 runs (the model answered from its own knowledge; the description named IPOs and new buys but not a stock already held, bounces or wash sales); decoy-3 passed 2 of 2
+files: SKILL.md (description: adds 'will it bounce Monday', 'sell at a loss and buy back', wash sales; drops three example phrases already covered elsewhere in it), version files. Description 1,507 characters.
+
 ### C-20261127-2 · 2026-11-27 · 2026 long-term capital gains brackets from the IRS source; market sale shows them (0.15.1)
 because: research/2026-11-21-market-data-and-base-rates.md (brackets had only a secondary source); IRS Rev. Proc. 2025-32 section 3.03 read 2026-11-27
 files: data/rates.json (capital_gains, 2026), scripts/fw_markets.py (long_rate_line, cmd_sale), tests/test_fw.py (test_sale_holding_period_and_wash), version files. A long-term sale prints the sale year's 0% and 15% thresholds by filing status and the 3.8% NIIT line; a year with no entry says so instead of guessing.
