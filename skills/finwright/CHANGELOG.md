@@ -4,6 +4,10 @@ Every change to [SKILL.md](SKILL.md) and its companions, newest first, each with
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261127-4 · 2026-11-27 · Trigger eval runner refuses to score a session without finwright; EVAL_PLUGIN_DIR (0.15.3)
+because: market evals 2026-11-27 scored 0 of 4 twice while the installed plugin was disabled (parked), which read as a description failure
+files: tools/run_trigger_evals.py (init-event check, exit 3; EVAL_PLUGIN_DIR passes --plugin-dir), version files. Checked by hand both ways (exit 3 without, a normal run with); the runner needs a live agent CLI, so it has no unit test.
+
 ### C-20261127-3 · 2026-11-27 · Description names questions about a held stock (0.15.2)
 because: market evals 2026-11-27, trigger-8 and trigger-9 fired 0 of 4 runs (the model answered from its own knowledge; the description named IPOs and new buys but not a stock already held, bounces or wash sales); decoy-3 passed 2 of 2
 files: SKILL.md (description: adds 'will it bounce Monday', 'sell at a loss and buy back', wash sales; drops three example phrases already covered elsewhere in it), version files. Description 1,507 characters.

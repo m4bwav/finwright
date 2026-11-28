@@ -7,6 +7,9 @@ records nor their overlay. A run can still list the home folder; keep OUT_DIR an
 Usage: python tools/run_trigger_evals.py skills/finwright/evals/evals.json OUT_DIR [runs]
 OUT_DIR/fixture-data must hold an invented data folder (`fw.py --data OUT_DIR/fixture-data init`, then accounts
 and balances with made-up figures). OUT_DIR belongs outside every repository.
+Set EVAL_PLUGIN_DIR to a finwright checkout to load it with --plugin-dir (needed when the installed plugin is
+disabled or parked). A run whose session did not load finwright at all stops the script with exit 3, so a
+missing plugin never reads as "the description did not trigger".
 """
 import json
 import os
@@ -28,6 +31,7 @@ if not overlay.exists():
                        encoding="utf-8")
 env = dict(os.environ, FINWRIGHT_DATA=str(out / "fixture-data"), FINWRIGHT_OVERLAY=str(overlay),
            FINWRIGHT_TODAY="2026-10-14")
+extra = ["--plugin-dir", os.environ["EVAL_PLUGIN_DIR"]] if os.environ.get("EVAL_PLUGIN_DIR") else []
 cases = [e for e in json.loads(evals_path.read_text(encoding="utf-8"))["evals"] if e["kind"] == "trigger"]
 results = []
 for c in cases:
@@ -35,19 +39,25 @@ for c in cases:
     for n in range(1, runs + 1):
         trace = out / f"{c['id']}-run{n}.jsonl"
         p = subprocess.run([claude, "-p", c["prompt"], "--output-format", "stream-json", "--verbose",
-                            "--max-turns", "3"], cwd=cwd, env=env, capture_output=True, text=True,
+                            "--max-turns", "3", *extra], cwd=cwd, env=env, capture_output=True, text=True,
                            encoding="utf-8", errors="replace", timeout=600)
         trace.write_text(p.stdout, encoding="utf-8")
-        invoked = []
+        invoked, loaded = [], None
         for line in p.stdout.splitlines():
             try:
                 ev = json.loads(line)
             except ValueError:
                 continue
+            if isinstance(ev, dict) and ev.get("type") == "system" and ev.get("subtype") == "init":
+                loaded = any("finwright" in str(x) for x in ev.get("skills") or [])
             msg = ev.get("message") if isinstance(ev, dict) else None
             for block in (msg.get("content") or [] if isinstance(msg, dict) else []):
                 if isinstance(block, dict) and block.get("type") == "tool_use" and block.get("name") == "Skill":
                     invoked.append(str(block.get("input", {}).get("skill", "")))
+        if loaded is False:
+            print(f"{c['id']} run {n}: finwright is not loaded in the session (disabled or parked?); "
+                     "set EVAL_PLUGIN_DIR to the checkout. Trace: " + str(trace), file=sys.stderr)
+            sys.exit(3)
         fired = any("finwright" in s for s in invoked)
         hits += fired
         print(f"{c['id']} run {n}: skills {invoked or 'none'} -> {'finwright' if fired else 'no finwright'}",
