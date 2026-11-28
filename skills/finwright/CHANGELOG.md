@@ -4,6 +4,10 @@ Every change to [SKILL.md](SKILL.md) and its companions, newest first, each with
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers.
 
+### C-20261128-1 · 2026-11-28 · Description names a price CSV and bounce-after-a-drop questions (0.15.4)
+because: T-20261128-1 (outcome-4 skipped the skill in 3 of 3 runs when the user handed over a price CSV for a stock they did not say they held)
+files: SKILL.md (description: "asks about a stock's moves (a price CSV, 'will it bounce after a drop'), or tax on selling shares they hold"; three small trims elsewhere to stay under the listing cut-off), version files. Description 1,533 characters. outcome-4 now 3/3; trigger-9 unchanged at 1/3 (L-023).
+
 ### C-20261127-4 · 2026-11-27 · Trigger eval runner refuses to score a session without finwright; EVAL_PLUGIN_DIR (0.15.3)
 because: market evals 2026-11-27 scored 0 of 4 twice while the installed plugin was disabled (parked), which read as a description failure
 files: tools/run_trigger_evals.py (init-event check, exit 3; EVAL_PLUGIN_DIR passes --plugin-dir), version files. Checked by hand both ways (exit 3 without, a normal run with); the runner needs a live agent CLI, so it has no unit test.

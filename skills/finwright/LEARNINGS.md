@@ -8,6 +8,14 @@ Entries here are public. They never name the user's institutions, employers, pla
 
 ## Active
 
+### L-023 · 2026-11-28 · `generic-tax-question-skips-skill`: a figure-free wash sale question rarely loads the skill
+- Trigger: "if I sell my shares at a loss and buy back next week, what happens tax-wise?" loaded finwright in about 1 of 3 headless runs, whatever the description said; the other runs gave a correct general answer.
+- Hypothesis: the model treats a textbook tax rule as general knowledge; a description can name it but cannot make loading worth it when no records or numbers are involved.
+- Rule: do not spend description characters chasing this case; judge it on answer quality. A question with figures, a CSV or the user's holdings does load the skill (outcome-4 3/3).
+- Evidence: T-20261128-1
+- Scope: skill
+- Status: active · helpful 0 · harmful 0 · last_confirmed 2026-11-28
+
 ### L-022 · 2026-11-21 · `bounce-question-is-a-coin-flip`: a "will it bounce" question needs this ticker's own count, not a story
 - Trigger: a user asked whether a stock that fell sharply after hours would bounce the next session and then fall.
 - Hypothesis: short-term reversal after big one-day drops is small, partly bid-ask bounce, and drops with news keep drifting; a chat answer turns a near coin flip into a confident call.
