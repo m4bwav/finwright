@@ -8,6 +8,12 @@ Entry shape: `### T-YYYYMMDD-n · date · harness · env · passed/total`, then 
 
 ## Runs
 
+### T-20261128-1 · 2026-11-28 · claude -p headless, market cases: trigger-9 via tools/run_trigger_evals.py with EVAL_PLUGIN_DIR, outcome-4 by hand (Bash python, Read, Skill allowed, 12 turns) · Windows 11 native, fixture data, an invented 301-day ZZZT price CSV · outcome-4 3/3 after C-20261128-1 (0/3 before); trigger-9 1/3 before and after; decoy-3 3/3 clean
+- Evidence: a Skill tool_use naming `finwright:finwright` and a Bash call running `fw.py market bounce` in each outcome trace; each final answer quoted the past-case count and sample size and said "coin flip"; no order, no buy or sell call.
+- Before the change, all 3 outcome runs skipped the skill and computed the counts with ad hoc pandas or inline Python: honest answers, but not the bundled script.
+- trigger-9 (wash sale question with no figures) mostly gets a correct answer from general tax knowledge; four description wordings scored 0/3 to 1/3, the same as before. Recorded as a known limit (L-023), not tuned further.
+- led to: C-20261128-1
+
 ### T-20261021-1 · 2026-10-21 · claude -p 2.1.281 headless via tools/run_trigger_evals.py, trigger-7 only, 3 runs · Windows 11 native, fixture data and overlay · 1/1 case, 3/3 runs; unit 45/45
 - Evidence: a Skill tool_use naming `finwright:finwright` in each stream-json trace; every run then read references/inbox-sweep.md as its first file, the route the case is about.
 - Not graded: the case's other two expectations (a way to get the mail in, no password request; `mail scan` in the plan) need the final answer, and the runner's `--max-turns 3` ends each run while it is still checking the overlay and data folder. A content check needs a longer run.
